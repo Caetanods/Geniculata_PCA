@@ -76,9 +76,8 @@ rate.male$sigma.d / rate.female$sigma.d
 ## The value are different but is this different significative?
 ## Simulate multivariate data in the phylogeny from a normal distribution.
 ## Maybe here two normal distributions, each equal to one of the extimated data.
+## Did a modification of the Dean Adams function to do this simulation:
 
-a <- two.d.array(m.male)
-a
 
 ## Fitting different models to the data:
 ## Fitting an OU model by trasnforming the tree:
