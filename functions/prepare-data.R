@@ -75,17 +75,17 @@ sim.geomorpho <- function (phy, A, iter = 999){
     x.sim <- sim.char(phy, rate.mat, nsim = iter)
     sig.sim <- 1
     rate.val <- rep(0, iter)
+	print("Here is ok")
 
 	## Do the simulations
     for (ii in 1:iter) {
-        sigmad.sim <- sigma.d(phy, x.sim[, , ii], ntaxa)
-        sig.sim <- ifelse(sigmad.sim$ratio >= sigmad.obs$ratio, sig.sim + 1, sig.sim)
-        rate.val[ii] <- sigmad.sim$ratio
+        sigmad.sim <- sigma.d(phy, x.sim[, ,ii], ntaxa)
+        sig.sim <- ifelse(sigmad.sim >= sigmad.obs, sig.sim + 1, sig.sim)
+        rate.val[ii] <- sigmad.sim
         sig.sim <- sig.sim/(iter + 1)
-        rate.val[iter + 1] = sigmad.obs$ratio
-        hist(rate.val, 30, freq = TRUE, col = "gray", xlab = "SigmaD ratio")
-        arrows(sigmad.obs$ratio, 50, sigmad.obs$ratio, 5, length = 0.1, lwd = 2)
-        return(list(sigma.d.all = sigmad.obs, sigmad.ratio = sigmad.obs$ratio, pvalue = sig.sim))
+        rate.val[iter + 1] <- sigmad.obs
+        hist(rate.val, 30, freq = TRUE, col = "gray", xlab = "SigmaD")
+        arrows(sigmad.obs, 50, sigmad.obs, 5, length = 0.1, lwd = 2)
+        return(list(sigma.d.all = sigmad.obs, pvalue = sig.sim))
     }
 }
-
