@@ -17,7 +17,7 @@ to.geomorph <- function(x){
     return(mm)
 }
 
-sim.geomorpho <- function (phy, A, gp, iter = 999){
+sim.geomorpho <- function (phy, A, iter = 999){
 	## This is a modification of the function 'compare.evol.rates' from the package
 	##		'geomorph' by Dean Adams. Please cite the original package and correspondent
 	##		articles. See 'help(compare.evol.rates)' for more info.
@@ -37,16 +37,10 @@ sim.geomorpho <- function (phy, A, gp, iter = 999){
     if (any(is.na(A)) == T) {
         stop("Data matrix contains missing values. Estimate these first (see 'estimate.missing').")
     }
-    if (!is.factor(gp)) {
-        stop("gp is not a factor.")
-    }
-    if (is.null(names(gp))) {
-        stop("Factor contains no names. Use names() to assign specimen names to group factor.")
-    }
     if (class(phy) != "phylo") 
         stop("tree must be of class 'phylo.'")
     ntaxa <- length(phy$tip.label)
-    N <- nrow(x)
+    N <- nrow(x) ## This is the number of species.
     if (N != dim(x)[1]) {
         stop("Number of taxa in data matrix and tree are not not equal.")
     }
@@ -54,12 +48,10 @@ sim.geomorpho <- function (phy, A, gp, iter = 999){
         stop("Data matrix missing some taxa present on the tree.")
     if (length(match(phy$tip.label, rownames(x))) != N) 
         stop("Tree missing some taxa in the data matrix.")
-    p <- ncol(x) ## 
-    sigma.d <- function(phy, x, N, gp) {
+    p <- ncol(x) ## This is the (number of landmarks * 2) + 1
+
+    sigma.d <- function(phy, x, N) {
         x <- prcomp(x)$x
-        gp <- gp[rownames(x)]
-        ngps <- nlevels(gp)
-        gpsz <- table(gp)
         ones <- array(1, N)
         C <- vcv.phylo(phy)
         C <- C[rownames(x), rownames(x)]
@@ -70,35 +62,12 @@ sim.geomorpho <- function (phy, A, gp, iter = 999){
         dist.adj <- as.matrix(dist(rbind((D.mat %*% (x - (ones %*% 
             a.obs))), 0)))
         vec.d2 <- dist.adj[N + 1, 1:N]^2
-        sigma.d <- tapply(vec.d2, gp, sum)/gpsz/p
         sigma.d.all <- sum(vec.d2)/N/p
-        if (ngps == 1) {
-            return(sigma.d.all)
-        }
-        if (ngps == 2) {
-            sigma.d.rat <- max(sigma.d)/min(sigma.d)
-            return(list(sigma.all = sigma.d.all, ratio = sigma.d.rat, 
-                sigma.d.all = sigma.d))
-        }
-        if (ngps > 2) {
-            sigma.d.rat.gp <- array(0, dim = c(ngps, ngps))
-            for (i in 1:(ngps - 1)) {
-                for (j in 2:ngps) {
-                  tmp <- c(sigma.d[i], sigma.d[j])
-                  sigma.d.rat.gp[i, j] <- max(tmp)/min(tmp)
-                  diag(sigma.d.rat.gp) <- 0
-                  sigma.d.rat.gp[lower.tri(sigma.d.rat.gp)] <- 0
-                }
-            }
-            sigma.d.rat <- max(sigma.d.rat.gp)
-            return(list(sigma.all = sigma.d.all, ratio = sigma.d.rat, 
-                sigma.d.all = sigma.d, sigma.gp = sigma.d.rat.gp))
-        }
+        return(sigma.d.all)
     }
-    if (nlevels(gp) == 1) {
-        print("Single group. Sigma calculated for all specimens together.")
-        sigmad.obs <- sigma.d(phy, x, ntaxa, gp)
-        return(list(sigma.d = sigmad.obs))
+    
+    sigmad.obs <- sigma.d(phy, x, ntaxa)
+    ## return(list(sigma.d = sigmad.obs))  ## The original function ends here and do not do the simulations.
     }
     if (nlevels(gp) > 1) {
         sigmad.obs <- sigma.d(phy, x, ntaxa, gp)
