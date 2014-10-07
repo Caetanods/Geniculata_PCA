@@ -77,7 +77,11 @@ rate.male$sigma.d / rate.female$sigma.d
 ## Simulate multivariate data in the phylogeny from a normal distribution.
 ## Maybe here two normal distributions, each equal to one of the extimated data.
 ## Did a modification of the Dean Adams function to do this simulation:
-
+source("./functions/prepare-data.R")
+## The function is working. However, the simulation is not working.
+## Guess that the simulation is made to work with the ratios and not
+## with the absolute value. Need to tweek a little bit to work then.
+res <- sim.geomorpho(tr, m.male, iter = 99)
 
 ## Fitting different models to the data:
 ## Fitting an OU model by trasnforming the tree:
