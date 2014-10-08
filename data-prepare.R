@@ -77,18 +77,20 @@ matrix(c(female.sig.eq$phy.signal, female.sig.gr$phy.signal, female.sig.eq$pvalu
 ## Females deviate more from BM than males.
 
 ## Calculating rates of evolution under a BM model (Adams, 2014, Sys Bio)
-## Checking if male genitalia evolve faster than female genitalia under BM
-pdf(file = "Monte_Carlo_plot.pdf")
+## Using the tree with branch lengths equal to 1:
+pdf(file = "Monte_Carlo_unit_plot.pdf")
 res <- geo.comp.rates(tr, m.male, m.female, iter = 1000)
 dev.off()
 
-## Ratio of observed sigma:
-obs <- res$sigmaA / res$sigmaB
-obs
+## Results
+res$sigmaA / res$sigmaB
+res$p.value
 
-dd <- density(res$null.sigmaA / res$null.sigmaB)
-plot(dd)
-abline(v = 1.0)
-cd <- ecdf(res$null.sigmaA / res$null.sigmaB)
-cd(obs)
-quantile(res$sim.sigmaA / res$sim.sigmaB, probs = c(0.025, 0.975))
+## Using the tree with branch lengths by Grafen:
+pdf(file = "Monte_Carlo_grafen_plot.pdf")
+res <- geo.comp.rates(tr.grafen, m.male, m.female, iter = 1000)
+dev.off()
+
+## Results
+res$sigmaA / res$sigmaB
+res$p.value

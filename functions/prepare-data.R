@@ -93,12 +93,12 @@ geo.comp.rates <- function (phy, A, B, iter = 999){
 	## Need to add the observed value to the distribution.
 	sim.ratio <- append(sim.ratio, sigmad.ratio)
 	
-	## Calculate the p.value:
-	sig.sim <- ifelse(sigmad.sim$ratio >= sigmad.obs$ratio, sig.sim + 1, sig.sim)
+	## Make the plot:
     hist(sim.ratio, 30, freq = TRUE, col = "gray", xlab = "SigmaD")
     arrows(sigmad.ratio, 50, sigmad.ratio, 5, length = 0.1, lwd = 2, col = "red")
 	ifelse(who == "A", st <- "A / B", st <- "B / A")
-	legend("topright", paste("sigma ratio: ", st, sep=""), bty="n", text.col = "blue")
+	legend("topright", paste("sigma ratio: ", st, "\n", "p value: ", round(p.value, 3), sep="")
+					 , bty="n", text.col = "blue")
 
     return(list(sigmaA = sigmad.obs.A, sigmaB = sigmad.obs.B,
 					null.sigmaA = sigmad.sim.A, null.sigmaB = sigmad.sim.B, p.value = p.value))
