@@ -17,7 +17,7 @@ to.geomorph <- function(x){
     return(mm)
 }
 
-sim.geomorpho <- function (phy, A, B, iter = 999){
+geo.comp.rates <- function (phy, A, B, iter = 999){
 	## This is a modification of the function 'compare.evol.rates' from the package
 	##		'geomorph' by Dean Adams. Please cite the original package and correspondent
 	##		articles. See 'help(compare.evol.rates)' for more info.
@@ -71,19 +71,35 @@ sim.geomorpho <- function (phy, A, B, iter = 999){
 	sigmad.sim.B <- rep(0, iter)
 
 	## Calculate distribution of sigma values.
-	for (ii in 1:iter) {
-        sigmad.sim.A[ii] <- sigma.d(phy, A.sim[, ,ii], ntaxa, A.p)
-		sigmad.sim.B[ii] <- sigma.d(phy, B.sim[, ,ii], ntaxa, B.p)
+	if(who == "A"){
+		for (ii in 1:iter) {
+			sigmad.sim.A[ii] <- sigma.d(phy, A.sim[, ,ii], ntaxa, A.p)
+			sigmad.sim.B[ii] <- sigma.d(phy, B.sim[, ,ii], ntaxa, B.p)
+			sig.sim <- ifelse(sigmad.sim.A[ii] / sigmad.sim.B[ii] >= sigmad.ratio, sig.sim + 1, sig.sim)
+		}
+	sim.ratio <- sigmad.sim.A / sigmad.sim.B
+	} else {
+		for (ii in 1:iter) {
+			sigmad.sim.A[ii] <- sigma.d(phy, A.sim[, ,ii], ntaxa, A.p)
+			sigmad.sim.B[ii] <- sigma.d(phy, B.sim[, ,ii], ntaxa, B.p)
+			sig.sim <- ifelse(sigmad.sim.B[ii] / sigmad.sim.A[ii] >= sigmad.ratio, sig.sim + 1, sig.sim)
+		}
+	sim.ratio <- sigmad.sim.B / sigmad.sim.A
 	}
+	
+	## Calculate the p value for the Monte Carlo:
+	p.value <- sig.sim / (iter + 1)
 
-	ifelse(who == "A", sim.ratio <- sigmad.sim.A / sigmad.sim.B, 
-					sim.ratio <- sigmad.sim.B / sigmad.sim.A) 
-
+	## Need to add the observed value to the distribution.
+	sim.ratio <- append(sim.ratio, sigmad.ratio)
+	
+	## Calculate the p.value:
+	sig.sim <- ifelse(sigmad.sim$ratio >= sigmad.obs$ratio, sig.sim + 1, sig.sim)
     hist(sim.ratio, 30, freq = TRUE, col = "gray", xlab = "SigmaD")
     arrows(sigmad.ratio, 50, sigmad.ratio, 5, length = 0.1, lwd = 2, col = "red")
 	ifelse(who == "A", st <- "A / B", st <- "B / A")
-	legend("topright", paste("sigma ratio: ", str, sep=""), bty="n", text.col = "blue")
+	legend("topright", paste("sigma ratio: ", st, sep=""), bty="n", text.col = "blue")
 
     return(list(sigmaA = sigmad.obs.A, sigmaB = sigmad.obs.B,
-					null.sigmaA = sigmad.sim.A, null.sigmaB = sigmad.sim.B))
+					null.sigmaA = sigmad.sim.A, null.sigmaB = sigmad.sim.B, p.value = p.value))
 }

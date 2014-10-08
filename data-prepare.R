@@ -78,19 +78,17 @@ matrix(c(female.sig.eq$phy.signal, female.sig.gr$phy.signal, female.sig.eq$pvalu
 
 ## Calculating rates of evolution under a BM model (Adams, 2014, Sys Bio)
 ## Checking if male genitalia evolve faster than female genitalia under BM
-gp <- factor(rep(1, times = length(tr$tip.label)))
-names(gp) <- tr$tip.label
+pdf(file = "Monte_Carlo_plot.pdf")
+res <- geo.comp.rates(tr, m.male, m.female, iter = 1000)
+dev.off()
 
-rate.male <- compare.evol.rates(tr, m.male, gp = gp, iter = 5)
-rate.female <- compare.evol.rates(tr, m.female, gp = gp, iter = 5)
-rate.male$sigma.d / rate.female$sigma.d
+## Ratio of observed sigma:
+obs <- res$sigmaA / res$sigmaB
+obs
 
-## The value are different but is this different significative?
-res <- sim.geomorpho(tr, m.male, m.female, iter = 99)
-
-dd <- density(res$sim.sigmaA / res$sim.sigmaB)
+dd <- density(res$null.sigmaA / res$null.sigmaB)
 plot(dd)
 abline(v = 1.0)
-cd <- ecdf(res$sim.sigmaA / res$sim.sigmaB)
-cd(1.0)
+cd <- ecdf(res$null.sigmaA / res$null.sigmaB)
+cd(obs)
 quantile(res$sim.sigmaA / res$sim.sigmaB, probs = c(0.025, 0.975))
