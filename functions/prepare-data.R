@@ -24,7 +24,7 @@ sim.geomorpho <- function (phy, A, B, iter = 999){
 
 	## Check objects block:
     A <- two.d.array(A) ## Make the data into "MorphoJ export" format.
-	B <- two.d.array(B)
+	B <- two.d.array(B) ## Make the data into "MorphoJ export" format.
     ntaxa <- length(phy$tip.label)
     A.p <- ncol(A) ## This is the (number of landmarks * 2) + 1
     B.p <- ncol(B) ## This is the (number of landmarks * 2) + 1
@@ -51,21 +51,27 @@ sim.geomorpho <- function (phy, A, B, iter = 999){
 	## Getting the faster rate:
 	if(sigmad.obs.A >= sigmad.obs.B){
 		sigmad.ratio <- sigmad.obs.A / sigmad.obs.B
+		sigma.sim <- sigmad.obs.A
 		who <- "A"
 	} else {
 		sigmad.ratio <- sigmad.obs.B / sigmad.obs.A
+		sigma.sim <- sigmad.obs.B
 		who <- "B"
 	}
-    rate.A <- diag(sigmad.obs.A, A.p)
-	rate.B <- diag(sigmad.obs.B, B.p)
+	
+	## Simulate the null distribution of traits.
+	## There is no difference between the set of traits.
+    rate.A <- diag(sigma.sim, A.p)
+	rate.B <- diag(sigma.sim, B.p)
     A.sim <- sim.char(phy, rate.A, nsim = iter)
 	B.sim <- sim.char(phy, rate.B, nsim = iter)
+
     sig.sim <- 1
     sigmad.sim.A <- rep(0, iter)
 	sigmad.sim.B <- rep(0, iter)
 
-	## Do the simulations
-    for (ii in 1:iter) {
+	## Calculate distribution of sigma values.
+	for (ii in 1:iter) {
         sigmad.sim.A[ii] <- sigma.d(phy, A.sim[, ,ii], ntaxa, A.p)
 		sigmad.sim.B[ii] <- sigma.d(phy, B.sim[, ,ii], ntaxa, B.p)
 	}
@@ -74,8 +80,10 @@ sim.geomorpho <- function (phy, A, B, iter = 999){
 					sim.ratio <- sigmad.sim.B / sigmad.sim.A) 
 
     hist(sim.ratio, 30, freq = TRUE, col = "gray", xlab = "SigmaD")
-    arrows(sigmad.ratio, 50, sigmad.ratio, 5, length = 0.1, lwd = 2)
+    arrows(sigmad.ratio, 50, sigmad.ratio, 5, length = 0.1, lwd = 2, col = "red")
+	ifelse(who == "A", st <- "A / B", st <- "B / A")
+	legend("topright", paste("sigma ratio: ", str, sep=""), bty="n", text.col = "blue")
 
     return(list(sigmaA = sigmad.obs.A, sigmaB = sigmad.obs.B,
-					sim.sigmaA = sigmad.sim.A, sim.sigmaB = sigmad.sim.B))
+					null.sigmaA = sigmad.sim.A, null.sigmaB = sigmad.sim.B))
 }
