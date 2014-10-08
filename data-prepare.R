@@ -51,6 +51,18 @@ plotGMPhyloMorphoSpace(tr.grafen, m.female)
 title("Females")
 dev.off()
 
+## Using the morphological integration analysis (Adams and Felice, 2014)
+int.unit <- phylo.pls(m.male, m.female, tr, iter=1000, verbose = TRUE)
+int.grafen <- phylo.pls(m.male, m.female, tr.grafen, iter=1000, verbose = TRUE)
+
+pdf("phylo.pls_unit.pdf")
+phylo.pls(m.male, m.female, tr, iter=1000, verbose = TRUE)
+dev.off()
+
+pdf("phylo.pls_grafen.pdf")
+phylo.pls(m.male, m.female, tr.grafen, iter=1000, verbose = TRUE)
+dev.off()
+
 ## Check if data have differ from a BM model:
 male.sig.eq <- physignal(tr, m.male, method = "Kmult", iter = 999)
 male.sig.gr <- physignal(tr.grafen, m.male, method = "Kmult", iter = 999)
@@ -82,22 +94,3 @@ source("./functions/prepare-data.R")
 ## Guess that the simulation is made to work with the ratios and not
 ## with the absolute value. Need to tweek a little bit to work then.
 res <- sim.geomorpho(tr, m.male, iter = 99)
-
-## Fitting different models to the data:
-## Fitting an OU model by trasnforming the tree:
-## Are the fit better under other models?
-
-## Not sure if I can fit other models of evolution this way.
-## Need to review the characteristics of the K statistics.
-to.grafen.OU <- rescale(tr.grafen, model = "OU")
-
-OU.it.k <- list()
-alpha <- rexp(10, 2)
-for(i in 1:10){
-    male.grafen.OU <- to.grafen.OU(alpha[i], rate.male$sigma.d)
-    OU.it.k[[i]] <- physignal(male.grafen.OU, m.male, method = "Kmult", iter = 999)
-}
-OU.it.k[[10]]
-
-## Using the morphological integration analysis (Adams and Felice, 2014)
-phylo.pls(m.male, m.female, tr, iter=5)
