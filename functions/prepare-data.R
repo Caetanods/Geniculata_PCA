@@ -17,42 +17,20 @@ to.geomorph <- function(x){
     return(mm)
 }
 
-sim.geomorpho <- function (phy, A, iter = 999){
+sim.geomorpho <- function (phy, A, B, iter = 999){
 	## This is a modification of the function 'compare.evol.rates' from the package
 	##		'geomorph' by Dean Adams. Please cite the original package and correspondent
 	##		articles. See 'help(compare.evol.rates)' for more info.
 
 	## Check objects block:
-    if (length(dim(A)) == 3) {
-        if (is.null(dimnames(A)[[3]])) {
-            stop("Data matrix does not include taxa names as dimnames for 3rd dimension.")
-        }
-        x <- two.d.array(A) ## Make the data into "MorphoJ export" format.
-    }
-    if (length(dim(A)) == 2) {
-        if (is.null(rownames(A))) {
-            stop("Data matrix does not include taxa names as dimnames for rows.")
-        }
-        x <- A
-    }
-    if (any(is.na(A)) == T) {
-        stop("Data matrix contains missing values. Estimate these first (see 'estimate.missing').")
-    }
-    if (class(phy) != "phylo") 
-        stop("tree must be of class 'phylo.'")
+    A <- two.d.array(A) ## Make the data into "MorphoJ export" format.
+	B <- two.d.array(B)
     ntaxa <- length(phy$tip.label)
-    N <- nrow(x) ## This is the number of species.
-    if (N != dim(x)[1]) {
-        stop("Number of taxa in data matrix and tree are not not equal.")
-    }
-    if (length(match(rownames(x), phy$tip.label)) != N) 
-        stop("Data matrix missing some taxa present on the tree.")
-    if (length(match(phy$tip.label, rownames(x))) != N) 
-        stop("Tree missing some taxa in the data matrix.")
-    p <- ncol(x) ## This is the (number of landmarks * 2) + 1
+    A.p <- ncol(A) ## This is the (number of landmarks * 2) + 1
+    B.p <- ncol(B) ## This is the (number of landmarks * 2) + 1
 
 	## Define the sigma.d function:
-    sigma.d <- function(phy, x, N) {
+    sigma.d <- function(phy, x, N, p) {
         x <- prcomp(x)$x
         ones <- array(1, N)
         C <- vcv.phylo(phy)
@@ -68,24 +46,36 @@ sim.geomorpho <- function (phy, A, iter = 999){
         return(sigma.d.all)
     }
     
-    sigmad.obs <- sigma.d(phy, x, ntaxa)
-    ## return(list(sigma.d = sigmad.obs))  ## The original function ends here and do not do the simulations.
-
-    rate.mat <- diag(sigmad.obs, p)
-    x.sim <- sim.char(phy, rate.mat, nsim = iter)
+    sigmad.obs.A <- sigma.d(phy, A, ntaxa, A.p)
+	sigmad.obs.B <- sigma.d(phy, B, ntaxa, B.p)
+	## Getting the faster rate:
+	if(sigmad.obs.A >= sigmad.obs.B){
+		sigmad.ratio <- sigmad.obs.A / sigmad.obs.B
+		who <- "A"
+	} else {
+		sigmad.ratio <- sigmad.obs.B / sigmad.obs.A
+		who <- "B"
+	}
+    rate.A <- diag(sigmad.obs.A, A.p)
+	rate.B <- diag(sigmad.obs.B, B.p)
+    A.sim <- sim.char(phy, rate.A, nsim = iter)
+	B.sim <- sim.char(phy, rate.B, nsim = iter)
     sig.sim <- 1
-    rate.val <- rep(0, iter)
-	print("Here is ok")
+    sigmad.sim.A <- rep(0, iter)
+	sigmad.sim.B <- rep(0, iter)
 
 	## Do the simulations
     for (ii in 1:iter) {
-        sigmad.sim <- sigma.d(phy, x.sim[, ,ii], ntaxa)
-        sig.sim <- ifelse(sigmad.sim >= sigmad.obs, sig.sim + 1, sig.sim)
-        rate.val[ii] <- sigmad.sim
-        sig.sim <- sig.sim/(iter + 1)
-        rate.val[iter + 1] <- sigmad.obs
-        hist(rate.val, 30, freq = TRUE, col = "gray", xlab = "SigmaD")
-        arrows(sigmad.obs, 50, sigmad.obs, 5, length = 0.1, lwd = 2)
-        return(list(sigma.d.all = sigmad.obs, pvalue = sig.sim))
-    }
+        sigmad.sim.A[ii] <- sigma.d(phy, A.sim[, ,ii], ntaxa, A.p)
+		sigmad.sim.B[ii] <- sigma.d(phy, B.sim[, ,ii], ntaxa, B.p)
+	}
+
+	ifelse(who == "A", sim.ratio <- sigmad.sim.A / sigmad.sim.B, 
+					sim.ratio <- sigmad.sim.B / sigmad.sim.A) 
+
+    hist(sim.ratio, 30, freq = TRUE, col = "gray", xlab = "SigmaD")
+    arrows(sigmad.ratio, 50, sigmad.ratio, 5, length = 0.1, lwd = 2)
+
+    return(list(sigmaA = sigmad.obs.A, sigmaB = sigmad.obs.B,
+					sim.sigmaA = sigmad.sim.A, sim.sigmaB = sigmad.sim.B))
 }
