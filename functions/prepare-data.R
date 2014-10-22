@@ -63,6 +63,8 @@ geo.comp.rates <- function (phy, A, B, iter = 999){
 	## There is no difference between the set of traits.
     rate.A <- diag(sigma.sim, A.p)
 	rate.B <- diag(sigma.sim, B.p)
+
+	## Both rate.A and B are diag matrices. So the simulation here have covariance 0.
     A.sim <- sim.char(phy, rate.A, nsim = iter)
 	B.sim <- sim.char(phy, rate.B, nsim = iter)
 
