@@ -99,3 +99,9 @@ dev.off()
 ## Results
 res$sigmaA / res$sigmaB
 res$p.value
+
+## Now I can use the metric of Sidlauskas (2008). Sidlauskas, B. 2008. Continuous and Arrested Morphological Diversification in Sister Clades of Characiform Fishes: A Phylomorphospace Approach. Evolution 62:3135–3156.
+## The idea is to calculate the density index for males and for females. The calculus that Brian used in this paper was developed for two clades in the same tree, however, in our case we have more than one trait for each tip and a single group including all the tips.
+## We might need to modify his calculations to do something more direct in this case.
+
+## Remember also to analyse the data from the somatic measurements. The traits that were not derived from the genitalia will be used to understand the relative rate of evolution of the reproductive traits. We can thus compare female and male rates of evolution with the basal rate derived from the somatic traits.
