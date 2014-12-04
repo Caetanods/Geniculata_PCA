@@ -17,6 +17,18 @@ to.geomorph <- function(x){
     return(mm)
 }
 
+to.mean.shape <- function(ind.coord){
+    ## Function gets the output of 'gpagen' and calculates the mean shape per species.
+    spp <- unique(dimnames(ind.coord$coords)[[3]])
+    ind.per.spp <- lapply(spp, FUN = function(x) which(dimnames(ind.coord$coords)[[3]] == x) )
+    land <- dim(ind.coord$coords[,,1])[1]
+    coord <- array(dim = c(land,2,length(spp)), dimnames = list(NULL,NULL,spp))
+    for(i in 1:length(spp)){
+        coord[,,i] <- apply(ind.coord$coords[,,ind.per.spp[[i]]], c(1, 2), mean)
+    }
+    return(coord)
+}
+
 geo.comp.rates <- function (phy, A, B, iter = 999){
 	## This is a modification of the function 'compare.evol.rates' from the package
 	##		'geomorph' by Dean Adams. Please cite the original package and correspondent
