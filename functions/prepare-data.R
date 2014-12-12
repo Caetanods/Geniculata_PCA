@@ -186,5 +186,5 @@ geo.comp.rates <- function (phy, A, B, plot = FALSE, iter = 999){
     p.value <- c(p.value.uncor, p.value.cor)
     names(p.value) <- c("Uncorr","Corr")
 
-    return(list(obs = obs, p.value = p.value, null.uncor = sim.ratio.uncor, null.cor = sim.ratio.uncor))
+    return(list(obs = obs, p.value = p.value, null.uncor = sim.ratio.uncor, null.cor = sim.ratio.cor))
 }
