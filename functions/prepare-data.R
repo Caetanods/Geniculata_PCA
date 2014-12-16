@@ -188,3 +188,35 @@ geo.comp.rates <- function (phy, A, B, plot = FALSE, iter = 999){
 
     return(list(obs = obs, p.value = p.value, null.uncor = sim.ratio.uncor, null.cor = sim.ratio.cor))
 }
+
+pls.plot <- function(A1, A2, scores1, scores2, xlab, ylab, xlim=NULL, ylim=NULL){
+    ## This function make a scatter.smooth plot of the PLS scores and add the
+    ##   deformation grids. This is a custom function extracted from the
+    ##   'pls.phylo' function in geomorph.
+    A1.ref <- mshape(A1)
+    pls1.min <- A1[, , which.min(scores1)]
+    pls1.max <- A1[, , which.max(scores1)]
+    A2.ref <- mshape(A2)
+    pls2.min <- A2[, , which.min(scores2)]
+    pls2.max <- A2[, , which.max(scores2)]
+    par(mar = c(1, 1, 1, 1) + 0.1)
+    split.screen(matrix(c(0.22, 1, 0.22, 1, 0.19, 0.39, 0, 
+        0.19, 0.8, 1, 0, 0.19, 0, 0.19, 0.19, 0.39, 0, 0.19, 
+        0.8, 1), byrow = T, ncol = 4))
+    screen(1)
+    scatter.smooth(female.pls.graphen~male.pls.graphen, axes = FALSE, main = ""
+       , ylab = ylab, xlab = xlab, xlim = xlim, ylim = ylim, pch = 16)
+    axis(side = 1); axis(side = 2)
+    mtext(side = 1, xlab, line = 2.5)
+    mtext(side = 2, ylab, line = 2.5)
+    screen(2)
+    geomorph:::tps(A1.ref, pls1.min, 20, sz = 0.7)
+    screen(3)
+    geomorph:::tps(A1.ref, pls1.max, 20, sz = 0.7)
+    screen(4)
+    geomorph:::tps(A2.ref, pls2.min, 20, sz = 0.7)
+    screen(5)
+    geomorph:::tps(A2.ref, pls2.max, 20, sz = 0.7)
+    close.screen(all.screens = TRUE)
+    par(mar = c(5.1, 4.1, 4.1, 2.1))
+}
