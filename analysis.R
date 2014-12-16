@@ -221,14 +221,38 @@ f.s.unit <- geo.comp.rates(tr.grafen, cord.female, cord.scu.female, plot = TRUE)
 ## Using the morphological integration analysis (Adams and Felice, 2014).
 ## Phylo with branch lengths equal to 1.
 ## int.unit <- phylo.pls(cord.male, cord.female, tr, iter=1000, verbose = TRUE)
+## int.unit.som.male <- phylo.pls(cord.male, cord.scu.male, tr, iter=1000, verbose = TRUE)
+## int.unit.som.female <- phylo.pls(cord.female, cord.scu.female, tr, iter=1000, verbose = TRUE)
 ## Phylo with ultrametric branch lengths.
 ## int.graphen <- phylo.pls(cord.male, cord.female, tr.grafen, iter=1000, verbose = TRUE)
-## save(int.graphen, int.unit, file = "./data/male_female_integration.RData")
-load("./data/male_female_integration.RData")
+## int.graphen.som.male <- phylo.pls(cord.male, cord.scu.male, tr.grafen, iter=1000, verbose = TRUE)
+## int.graphen.som.female <- phylo.pls(cord.female, cord.scu.female, tr.grafen, iter=1000, verbose = TRUE)
+## save(int.graphen, int.unit, int.unit.som.male, int.unit.som.female, int.graphen.som.male
+##    , int.graphen.som.female, file = "./data/shape_integration.RData")
+load("./data/shape_integration.RData")
+
+## If the correlation of male and female genitalia are due to some sexual selection process that
+##    is not present among the somatic traits and the genitalia, then we would expect that
+##    the correlation of genitalia with the somatic traits would not be significant and among
+##    genitalia of male and females it would be.
+
+## Check pvalue.
+int.pvalue <- rbind( c(int.unit$pvalue, int.unit.som.male$pvalue, int.unit.som.female$pvalue),
+      c(int.graphen$pvalue, int.graphen.som.male$pvalue, int.graphen.som.female$pvalue) )
+colnames(int.pvalue) <- c("male~female","male~som","female~som")
+rownames(int.pvalue) <- c("unit","graphen")
+int.pvalue
+## Check PLS correlation.
+int.cor <- rbind( c(int.unit[[1]], int.unit.som.male[[1]], int.unit.som.female[[1]]),
+      c(int.graphen[[1]], int.graphen.som.male[[1]], int.graphen.som.female[[1]]) )
+colnames(int.cor) <- c("male~female","male~som","female~som")
+rownames(int.cor) <- c("unit","graphen")
+int.cor
+
+## Plot the correlation of PLS values for male and females.
 male.pls.graphen <- int.graphen[[3]]
 female.pls.graphen <- int.graphen[[4]]
 
-## Test the plot function:
 source("functions/prepare-data.R")
 pdf("PLS_scores.pdf")
 pls.plot(cord.female, cord.male, female.pls.graphen, male.pls.graphen
@@ -236,13 +260,16 @@ pls.plot(cord.female, cord.male, female.pls.graphen, male.pls.graphen
        , xlim = c(-0.3, 0.4), ylim = c(-0.3,0.4))
 dev.off()
 
-## Check pvalue.
-int.unit$pvalue
-int.grafen$pvalue
-## Check PLS correlation.
-int.unit[[1]]
-int.grafen[[1]]
-
 ## Now I can use the metric of Sidlauskas (2008). Sidlauskas, B. 2008. Continuous and Arrested Morphological Diversification in Sister Clades of Characiform Fishes: A Phylomorphospace Approach. Evolution 62:3135–3156.
 ## The idea is to calculate the density index for males and for females. The calculus that Brian used in this paper was developed for two clades in the same tree, however, in our case we have more than one trait for each tip and a single group including all the tips.
 ## We might need to modify his calculations to do something more direct in this case.
+
+
+
+
+
+
+
+
+
+
