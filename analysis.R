@@ -45,13 +45,9 @@ tr.grafen <- compute.brlen(tr)
 pdf("Phylogeny_branch_lengths.pdf", width = 14)
 par(mfrow = c(1,2))
 plot.phylo(tr.grafen, edge.width = 1.5, label.offset = 0.03, font = 4, direction = "upwards")
-#edgelabels(round(tr.grafen$edge.length, 2), frame = "none", cex = 0.6, adj = c(0.5,-1))
 axisPhylo(side = 2)
-#title(main = "Branch lengths computed by Grafen", cex = 0.8)
 plot.phylo(tr, edge.width = 1.5, label.offset = 0.03, font = 4, direction = "upwards")
-#edgelabels(round(tr$edge.length, 2), frame = "none", cex = 0.6, adj = c(0.5,-1))
 axisPhylo(side = 2)
-#title(main = "Branch lengths all 1", cex = 0.8)
 dev.off()
 
 ## Plot the phylomorphospace.
@@ -87,13 +83,16 @@ female.var.prop <- round(female.nspr$sdev^2 / sum(female.nspr$sdev^2), digits = 
 
 ## Plot the percent of variation explained by each axis for male and female
 ##   genitalia. Note that female genitalia are more autocorrelated.
-pdf("SPCA_genitalia.pdf")
+pdf("./manuscript_figures/SPCA_genitalia.pdf")
+par(mar = c(4.0,4.0,2.0,2.0))
 plot(1:length(male.var.prop), male.var.prop, type = "b", pch = 4,
      , ylim = c(0,1.0), xlim = c(1,length(male.var.prop))
-     , xlab = "SPC axis", ylab = "% variation explained"
+     , xlab = "", ylab = ""
      , axes = FALSE )
 lines(1:length(female.var.prop), female.var.prop, type = "b")
 axis(side = 2); axis(side = 1, at = seq(1, length(male.var.prop)), pos = -0.03)
+mtext("SPC axis", side = 1, line = 2)
+mtext("% variation explained", side = 2, line = 2.2)
 legend(x=9, y=0.8, legend = c("Male","Female"), bty = "n", pch = c(4,1))
 dev.off()
 
@@ -115,9 +114,10 @@ dev.off()
 load("./data/male_female_rates.RData")
 
 ## Make density plot for ultrametric tree:
-pdf("Density_Genitalia_male_female_graphen.pdf")
+pdf("manuscript_figures/Density_Genitalia_male_female_graphen.pdf")
+par(mar = c(4.0,4.0,2.0,2.0))
 plot(density(comp.graphen$null.uncor), zero.line = FALSE, main=""
-   , xlab = expression(paste(sigma["mult.M"]^2 / sigma["mult.F"]^2))
+   , xlab = "", ylab = ""
    , xlim = c(0,4), ylim = c(0,5), axes=FALSE, lty = 3, lwd = 3)
 lines(density(comp.graphen$null.cor), lwd = 3)
 obs.rate <- comp.graphen$obs[1] / comp.graphen$obs[2]
@@ -125,12 +125,15 @@ segments(x0 = obs.rate, y0 = 0, x1 = obs.rate, y1 = 1.5, lwd = 2, lty = 1)
 text(x = obs.rate, y = 1.7, labels = round(obs.rate, 1))
 legend(x = 2.5, y = 4, legend = c("Uncorrelated","Correlated"), bty = "n", lty = c(3,1), lwd = 3)
 axis(side = 2, at = 0:5); axis(side = 1)
+mtext(expression(paste(sigma["mult.M"]^2 / sigma["mult.F"]^2)), side = 1, line = 2.5)
+mtext("Density", side = 2, line = 2)
 dev.off()
 
 ## For the unit tree:
-pdf("Density_Genitalia_male_female_unit.pdf")
+pdf("manuscript_figures/Density_Genitalia_male_female_unit.pdf")
+par(mar = c(4.0,4.0,2.0,2.0))
 plot(density(comp.unit$null.uncor), zero.line = FALSE, main=""
-   , xlab = expression(paste(sigma["mult.M"]^2 / sigma["mult.F"]^2))
+   , xlab = "", ylab = ""
    , xlim = c(0,4), ylim = c(0,5), axes=FALSE, lty = 3, lwd = 3)
 lines(density(comp.unit$null.cor), lwd = 3)
 obs.rate <- comp.unit$obs[1] / comp.unit$obs[2]
@@ -138,13 +141,16 @@ segments(x0 = obs.rate, y0 = 0, x1 = obs.rate, y1 = 1.5, lwd = 2, lty = 1)
 text(x = obs.rate, y = 1.7, labels = round(obs.rate, 1))
 legend(x = 2.5, y = 4, legend = c("Uncorrelated","Correlated"), bty = "n", lty = c(3,1), lwd = 3)
 axis(side = 2, at = 0:5); axis(side = 1)
+mtext(expression(paste(sigma["mult.M"]^2 / sigma["mult.F"]^2)), side = 1, line = 2.5)
+mtext("Density", side = 2, line = 2)
 dev.off()
 
 ## Plate version:
-pdf("Density_Genitalia_male_female_plate.pdf", width = 14)
+pdf("manuscript_figures/Density_Genitalia_male_female_plate.pdf", width = 14)
 par(mfrow = c(1,2))
+par(mar = c(4.0,4.0,2.0,0.0))
 plot(density(comp.graphen$null.uncor), zero.line = FALSE, main=""
-   , xlab = expression(paste(sigma["mult.M"]^2 / sigma["mult.F"]^2))
+   , xlab = "", ylab = ""
    , xlim = c(0,4), ylim = c(0,5), axes=FALSE, lty = 3, lwd = 3)
 lines(density(comp.graphen$null.cor), lwd = 3)
 obs.rate <- comp.graphen$obs[1] / comp.graphen$obs[2]
@@ -152,8 +158,11 @@ segments(x0 = obs.rate, y0 = 0, x1 = obs.rate, y1 = 1.5, lwd = 2, lty = 1)
 text(x = obs.rate, y = 1.7, labels = round(obs.rate, 1))
 legend(x = 2.5, y = 4, legend = c("Uncorrelated","Correlated"), bty = "n", lty = c(3,1), lwd = 3)
 axis(side = 2, at = 0:5); axis(side = 1)
+mtext(expression(paste(sigma["mult.M"]^2 / sigma["mult.F"]^2)), side = 1, line = 2.5)
+mtext("Density", side = 2, line = 2)
+par(mar = c(4.0,3.0,2.0,1.0))
 plot(density(comp.unit$null.uncor), zero.line = FALSE, main=""
-   , xlab = expression(paste(sigma["mult.M"]^2 / sigma["mult.F"]^2))
+   , xlab = "", ylab = ""
    , xlim = c(0,4), ylim = c(0,5), axes=FALSE, lty = 3, lwd = 3)
 lines(density(comp.unit$null.cor), lwd = 3)
 obs.rate <- comp.unit$obs[1] / comp.unit$obs[2]
@@ -161,6 +170,8 @@ segments(x0 = obs.rate, y0 = 0, x1 = obs.rate, y1 = 1.5, lwd = 2, lty = 1)
 text(x = obs.rate, y = 1.7, labels = round(obs.rate, 1))
 legend(x = 2.5, y = 4, legend = c("Uncorrelated","Correlated"), bty = "n", lty = c(3,1), lwd = 3)
 axis(side = 2, at = 0:5); axis(side = 1)
+mtext(expression(paste(sigma["mult.M"]^2 / sigma["mult.F"]^2)), side = 1, line = 2.5)
+mtext("Density", side = 2, line = 2)
 dev.off()
 
 ## Using Monte Carlo simulation produces empirical p.values.
@@ -217,12 +228,13 @@ load("./data/male_female_integration.RData")
 male.pls.graphen <- int.graphen[[3]]
 female.pls.graphen <- int.graphen[[4]]
 
-plot(female.pls.graphen~male.pls.graphen, axes = FALSE, main = ""
-   , ylab = "Female PLS scores", xlab = "Male PLS scores"
-   , xlim = c(-0.3,0.4), ylim = c(-0.3, 0.4)
-   , pch = 16)
-axis(side = 1); axis(side = 2)
-legend(x = -0.2, y = 0.3, legend = "")
+## Test the plot function:
+source("functions/prepare-data.R")
+pdf("PLS_scores.pdf")
+pls.plot(cord.female, cord.male, female.pls.graphen, male.pls.graphen
+       , xlab = "Female PLS scores", ylab = "Male PLS scores"
+       , xlim = c(-0.3, 0.4), ylim = c(-0.3,0.4))
+dev.off()
 
 ## Check pvalue.
 int.unit$pvalue
@@ -234,12 +246,3 @@ int.grafen[[1]]
 ## Now I can use the metric of Sidlauskas (2008). Sidlauskas, B. 2008. Continuous and Arrested Morphological Diversification in Sister Clades of Characiform Fishes: A Phylomorphospace Approach. Evolution 62:3135–3156.
 ## The idea is to calculate the density index for males and for females. The calculus that Brian used in this paper was developed for two clades in the same tree, however, in our case we have more than one trait for each tip and a single group including all the tips.
 ## We might need to modify his calculations to do something more direct in this case.
-
-
-
-
-
-
-
-
-
