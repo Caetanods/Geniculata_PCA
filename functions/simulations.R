@@ -66,3 +66,90 @@ Posdef <- function (n, ev = rexp(n, 1/100)) {
   Z <- t(O) %*% diag(ev) %*% O
   return(Z)
 }
+
+phylo.pls.light <- function(A1, A2, phy, iter = 999){
+	## This is a light version of phylo.pls which does not make default plots and dramatically
+	##   improves speed by dropping series of if tests.
+	## Warning: This version of the function does not provide warning messages and only
+	##   works with 2D morphometric data.
+    x <- two.d.array(A1)
+    y <- two.d.array(A2)
+    num.taxa.X <- nrow(x)
+    namesX <- rownames(x)
+    num.taxa.Y <- nrow(y)
+    namesY <- rownames(y)
+    if (is.null(namesX) == FALSE && is.null(namesY) == FALSE) {
+        mtch.A <- namesX[is.na(match(namesX, namesY))]
+    }
+    mtch.B <- namesX[is.na(match(namesX, phy$tip.label))]
+    data.all <- cbind(x, y)
+    Nspec <- nrow(x)
+    C <- vcv.phylo(phy, anc.nodes = FALSE)
+    C <- C[rownames(y), rownames(y)]
+    x <- x[rownames(y), ]
+    invC <- solve(C)
+    one <- matrix(1, Nspec, 1)
+    a <- t(t(one) %*% invC %*% data.all) * sum(sum(invC))^-1
+    R <- t(data.all - one %*% t(a)) %*% invC %*% (data.all - 
+        one %*% t(a)) * (Nspec - 1)^-1
+    R12 <- R[1:dim(x)[2], (dim(x)[2] + 1):(dim(x)[2] + dim(y)[2])]
+    pls <- svd(R12)
+    U <- pls$u
+    V <- pls$v
+    eigC <- eigen(C)
+    D.mat <- solve(eigC$vectors %*% diag(sqrt(eigC$values)) %*% 
+        t(eigC$vectors))
+    Phy.X <- D.mat %*% (data.all - one %*% t(a))
+    x.phy <- Phy.X[, c(1:dim(x)[2])]
+    y.phy <- Phy.X[, c((dim(x)[2] + 1):(dim(x)[2] + dim(y)[2]))]
+    XScores <- x.phy %*% U
+    YScores <- y.phy %*% V
+    pls.obs <- cor(XScores[, 1], YScores[, 1])
+    P.val <- 1
+    pls.val <- rep(0, iter)
+    for (ii in 1:iter) {
+        y.r <- y[sample(nrow(y)), ]
+        data.all.r <- cbind(x, y.r)
+        a.r <- t(t(one) %*% invC %*% data.all.r) * sum(sum(invC))^-1
+        R.r <- t(data.all.r - one %*% t(a.r)) %*% invC %*% (data.all.r - 
+            one %*% t(a.r)) * (Nspec - 1)^-1
+        R12.r <- R.r[1:dim(x)[2], (dim(x)[2] + 1):(dim(x)[2] + 
+            dim(y.r)[2])]
+        pls.r <- svd(R12.r)
+        U.r <- pls.r$u
+        V.r <- pls.r$v
+        Phy.X.r <- D.mat %*% (data.all.r - one %*% t(a.r))
+        x.phy.r <- Phy.X.r[, c(1:dim(x)[2])]
+        y.phy.r <- Phy.X.r[, c((dim(x)[2] + 1):(dim(x)[2] + dim(y.r)[2]))]
+        XScores.r <- x.phy.r %*% U.r[, 1]
+        YScores.r <- y.phy.r %*% V.r[, 1]
+        pls.r <- cor(XScores.r, YScores.r)
+        pls.val[ii] <- pls.r
+        P.val <- ifelse(pls.r >= pls.obs, P.val + 1, P.val)
+    }
+    pls.val[iter + 1] = pls.obs
+    P.val <- P.val/(iter + 1)
+    for (i in 1:iter) {
+        y.r <- y[sample(nrow(y)), ]
+        XY.vcv.r <- cov(cbind(x, y.r))
+        S12.r <- XY.vcv.r[1:dim(x)[2], (dim(x)[2] + 1):(dim(x)[2] + 
+            dim(y.r)[2])]
+        S21.r <- t(S12.r)
+        S11.r <- XY.vcv.r[1:dim(x)[2], 1:dim(x)[2]]
+        S22.r <- XY.vcv.r[(dim(x)[2] + 1):(dim(x)[2] + dim(y.r)[2]), 
+            (dim(x)[2] + 1):(dim(x)[2] + dim(y.r)[2])]
+        pls.r <- svd(S12.r)
+        U.r <- pls.r$u
+        V.r <- pls.r$v
+        XScores.r <- x %*% U.r[, 1]
+        YScores.r <- y.r %*% V.r[, 1]
+        PLS.r <- cor(XScores.r, YScores.r)
+        pls.val[i] <- PLS.r
+        P.val <- ifelse(PLS.r >= pls.obs, P.val + 1, P.val)
+    }
+    pls.val[iter + 1] = pls.obs
+    P.val <- P.val/(iter + 1)
+    return(list(`PLS Correlation` = pls.obs, pvalue = P.val, 
+            `Block 1 PLS Scores` = XScores[, 1], `Block 2 PLS Scores` = YScores[, 
+                1]))
+}
