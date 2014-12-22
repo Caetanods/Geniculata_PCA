@@ -260,16 +260,3 @@ pls.plot(cord.female, cord.male, female.pls.graphen, male.pls.graphen
        , xlim = c(-0.3, 0.4), ylim = c(-0.3,0.4))
 dev.off()
 
-## Now I can use the metric of Sidlauskas (2008). Sidlauskas, B. 2008. Continuous and Arrested Morphological Diversification in Sister Clades of Characiform Fishes: A Phylomorphospace Approach. Evolution 62:3135–3156.
-## The idea is to calculate the density index for males and for females. The calculus that Brian used in this paper was developed for two clades in the same tree, however, in our case we have more than one trait for each tip and a single group including all the tips.
-## We might need to modify his calculations to do something more direct in this case.
-
-
-
-
-
-
-
-
-
-
