@@ -297,7 +297,7 @@ pls.plot <- function(A1, A2, scores1, scores2, xlab, ylab, xlim=NULL, ylim=NULL)
         0.19, 0.8, 1, 0, 0.19, 0, 0.19, 0.19, 0.39, 0, 0.19, 
         0.8, 1), byrow = T, ncol = 4))
     screen(1)
-    scatter.smooth(female.pls.graphen~male.pls.graphen, axes = FALSE, main = ""
+    scatter.smooth(scores1~scores2, axes = FALSE, main = ""
        , ylab = ylab, xlab = xlab, xlim = xlim, ylim = ylim, pch = 16)
     axis(side = 1); axis(side = 2)
     mtext(side = 1, xlab, line = 2.5)
@@ -312,6 +312,17 @@ pls.plot <- function(A1, A2, scores1, scores2, xlab, ylab, xlim=NULL, ylim=NULL)
     geomorph:::tps(A2.ref, pls2.max, 20, sz = 0.7)
     close.screen(all.screens = TRUE)
     par(mar = c(5.1, 4.1, 4.1, 2.1))
+}
+
+two.b.pls.plot <- function(x, xlab, ylab, cex = 1){
+    ## Plot the results of two.b.pls.
+    up <- round(max(x$x.scores), digits = 1) + 0.1
+    plot(x$x.scores, x$y.scores, pch = 16, xlab = "", ylab = "", axes = FALSE, xlim = c(-up,up)
+       , ylim = c(-up,up), cex = cex)
+    axis(side = 1); axis(side = 2)
+    mtext(side = 1, text = xlab, line = 2.5)
+    mtext(side = 2, text = ylab, line = 2.5)
+    abline(lm(x$y.scores~x$x.scores), lwd = cex)
 }
 
 phylo.pls.light <- function(A1, A2, phy, iter = 999){
