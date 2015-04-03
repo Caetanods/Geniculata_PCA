@@ -50,7 +50,7 @@ pic.unit.jug.f <- sapply(1:dim(mf.jug)[2], function(x) pic(mf.jug[,x], tr) )
 pls.ind.grafen <- two.b.pls(pic.grafen.ind.m, pic.grafen.ind.f, verbose = TRUE)
 pls.ind.unit <- two.b.pls(pic.unit.ind.m, pic.unit.ind.f, verbose = TRUE)
 
-## Male genitalia vs. male scutellum and pronotum:
+## Male genitalia vs. male scutellum, pronotum and juga:
 pls.scu.m.grafen <- two.b.pls(pic.grafen.ind.m, pic.grafen.scu.m, verbose = TRUE)
 pls.scu.m.unit <- two.b.pls(pic.unit.ind.m, pic.unit.scu.m, verbose = TRUE)
 pls.pro.m.grafen <- two.b.pls(pic.grafen.ind.m, pic.grafen.pro.m, verbose = TRUE)
@@ -58,13 +58,13 @@ pls.pro.m.unit <- two.b.pls(pic.unit.ind.m, pic.unit.pro.m, verbose = TRUE)
 pls.jug.m.grafen <- two.b.pls(pic.grafen.ind.m, pic.grafen.jug.m, verbose = TRUE)
 pls.jug.m.unit <- two.b.pls(pic.unit.ind.m, pic.unit.jug.m, verbose = TRUE)
 
-## Female genitalia vs. female scutellum and pronotum:
+## Female genitalia vs. female scutellum, pronotum and juga:
 pls.scu.f.grafen <- two.b.pls(pic.grafen.ind.f, pic.grafen.scu.f, verbose = TRUE)
 pls.scu.f.unit <- two.b.pls(pic.unit.ind.f, pic.unit.scu.f, verbose = TRUE)
 pls.pro.f.grafen <- two.b.pls(pic.grafen.ind.f, pic.grafen.pro.f, verbose = TRUE)
 pls.pro.f.unit <- two.b.pls(pic.unit.ind.f, pic.unit.pro.f, verbose = TRUE)
-pls.jug.f.grafen$pvalue <- two.b.pls(pic.grafen.ind.f, pic.grafen.jug.f, verbose = TRUE)
-pls.jug.f.unit <- two.b.pls(pic.unit.ind.f, pic.unit.jug.f, verbose = TRUE)
+pls.jug.f.grafen <- two.b.pls(pic.grafen.ind.f, pic.grafen.jug.f, verbose = TRUE)
+pls.jug.f.unit$pvalue <- two.b.pls(pic.unit.ind.f, pic.unit.jug.f, verbose = TRUE)
 
 ## Making result plots:
 
