@@ -411,3 +411,42 @@ phylo.pls.light <- function(A1, A2, phy, iter = 999){
             `Block 1 PLS Scores` = XScores[, 1], `Block 2 PLS Scores` = YScores[, 
                 1]))
 }
+
+make.polygon <- function(times, mn.dispar, se.dispar, col){
+    ## Function to plot the polygon of standard error of the mean for the dtt plot.
+    ## Takes the times, mean disparity, standard error disparity, color.
+    px <- c(times, times[length(times)]
+          , times[(length(times) - 1):1]
+          , times[1])
+    py.down <- c(mn.dispar, mn.dispar[length(mn.dispar)] - se.dispar[length(se.dispar)]
+               , mn.dispar[(length(mn.dispar) - 1):1] - se.dispar[(length(se.dispar) - 1):1]
+               , mn.dispar[1])
+    py.up <- c(mn.dispar, mn.dispar[length(mn.dispar)] + se.dispar[length(se.dispar)]
+             , mn.dispar[(length(mn.dispar) - 1):1] + se.dispar[(length(se.dispar) - 1):1]
+             , mn.dispar[1])
+    polygon(px, py.down, col = col, border = col)
+    polygon(px, py.up, col = col, border = col)
+}
+
+make.proc.dist <- function(x){
+    ## Function to calculate pairwise partial Procrustes distances
+    ##      of a geomorph object.
+    ll <- dim(x)[3]
+    res <- matrix(nrow = ll, ncol = ll)
+    for(i in 1:ll ){
+        for(j in 1:ll){
+            res[i,j] <- proc.dist(x[,,i], x[,,j])
+        }
+    }
+    colnames(res) <- rownames(res) <- dimnames(x)[[3]]
+    return(res)
+}
+
+proc.dist <- function(x,y){
+    ## Calculate the partial Procrustes distance between two shapes.
+    ## x and y are two geomorph objects.
+    sq <- (x - y)^2
+    s.sq <- sum(apply(sq, 2, sum))
+    rt.s.sq <- sqrt(s.sq)
+    return(rt.s.sq)
+}
