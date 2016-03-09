@@ -4,54 +4,41 @@
 ##       simulations. We encourage the reader to run the analysis again for reproducibility.
 
 ## Uncomment to load previous simulations and results:
-## load("./data/all_analyses_results.RData")
+library(ape)
+load("./data/all_analyses_results.RData")
 
 ## Figure 1: Not made in R.
 
 ######################################################################################
 ## Figure 2: Correlated evolutionary changes of shape.
 
-par(mfrow = c(3,1))
+pdf("Figure_2_PLS_of_male_female_genitalia.pdf", width = 7, height = 14)
+par(mfrow = c(2,1))
 cex <- 2
-
-## Male and female genitalia.
-par(mar=c(2.5,4,2.5,2))
+par(mar=c(4,4,2.5,4))
 two.b.pls.plot(pls.gen.grafen, "PLS1 of male genitalia contrasts", "PLS1 of female genitalia contrasts", cex)
+text(x=0.2, y=-0.3, labels="r = 0.78, p = 0.007")
+two.b.pls.plot(pls.gen.unit, "PLS1 of male genitalia contrasts", "PLS1 of female genitalia contrasts", cex)
+text(x=0.1, y=-0.15, labels="r = 0.76, p = 0.02")
+dev.off()
 
-## Male and somatic.
-up1 <- round(max(pls.scu.m.grafen$x.scores), digits = 1) + 0.1
-up2 <- round(max(pls.pro.m.grafen$x.scores), digits = 1) + 0.1
-up <- max(up1,up2)
-par(mar=c(2.5,4,2.5,2))
-plot(pls.scu.m.grafen$x.scores, pls.scu.m.grafen$y.scores, pch = 21, col = "grey"
-     , xlab = "", ylab = "", axes = FALSE, xlim = c(-up,up), ylim = c(-up,up), cex = cex)
-points(pls.pro.m.grafen$x.scores, pls.pro.m.grafen$y.scores, cex = cex, pch = 24, col = "grey")
-points(pls.jug.m.grafen$x.scores, pls.jug.m.grafen$y.scores, cex = cex, pch = 23, col = "grey")
-abline(lm(pls.scu.m.grafen$y.scores ~ pls.scu.m.grafen$x.scores), lwd = cex, col = "black")
-abline(lm(pls.pro.m.grafen$y.scores ~ pls.pro.m.grafen$x.scores), lwd = cex, lty = 1, col = "black")
-abline(lm(pls.jug.m.grafen$y.scores ~ pls.jug.m.grafen$x.scores), lwd = cex, lty = 1, col = "black")
-axis(side = 1); axis(side = 2)
-mtext(side = 1, text = "PLS1 of male somatic contrasts", line = 2.5)
-mtext(side = 2, text = "PLS1 of male genitalia contrasts", line = 2.5)
+## Second-half of the figure. This is the results of the analysis of modularity using the CR
+##    coefficient.
 
-## Female and somatic.
-up1 <- round(max(pls.scu.f.grafen$x.scores), digits = 1) + 0.1
-up2 <- round(max(pls.pro.f.grafen$x.scores), digits = 1) + 0.1
-up <- max(up1,up2)
-par(mar=c(2.5,4,2.5,2))
-plot(pls.scu.f.grafen$x.scores, pls.scu.f.grafen$y.scores, pch = 21, col = "grey"
-     , xlab = "", ylab = "", axes = FALSE, xlim = c(-up,up), ylim = c(-up,up), cex = cex)
-points(pls.pro.f.grafen$x.scores, pls.pro.f.grafen$y.scores, cex = cex, pch = 24, col = "grey")
-points(pls.jug.f.grafen$x.scores, pls.jug.f.grafen$y.scores, cex = cex, pch = 23, col = "grey")
-abline(lm(pls.scu.f.grafen$y.scores ~ pls.scu.f.grafen$x.scores), lwd = cex, col = "black")
-abline(lm(pls.pro.f.grafen$y.scores ~ pls.pro.f.grafen$x.scores), lwd = cex, lty = 1, col = "black")
-abline(lm(pls.jug.f.grafen$y.scores ~ pls.jug.f.grafen$x.scores), lwd = cex, lty = 1, col = "black")
-axis(side = 1); axis(side = 2)
-mtext(side = 1, text = "PLS1 of female somatic contrasts", line = 2.5)
-mtext(side = 2, text = "PLS1 of female genitalia contrasts", line = 2.5)
+pdf("CR_analysis.pdf", width = 7, height = 14)
 
-######################################################################################
-## Figure 3: Not made in R.
+par(mfrow=c(2,1))
+hist(mod.grafen.test$random.CR, xlim = c(0,2), col="grey", border = "white", xlab="CR values"
+   , main="", breaks = 50)
+lines(x = c(mod.grafen.test$CR,mod.grafen.test$CR), y = c(0,500), lwd = 2)
+text(x = mod.grafen.test$CR, y = 600, labels = round(mod.grafen.test$CR, digits = 2) )
+
+hist(mod.unit.test$random.CR, xlim = c(0,2), col="grey", border = "white", xlab="CR values"
+   , main="", breaks = 50)
+lines(x = c(mod.unit.test$CR,mod.unit.test$CR), y = c(0,500), lwd = 2)
+text(x = mod.unit.test$CR, y = 600, labels = round(mod.unit.test$CR, digits = 2) )
+
+dev.off()
 
 ######################################################################################
 ## Figure 4: Pairwise Procrustes distances between the shape of male and female genitalia and
@@ -81,8 +68,9 @@ pp.jug.male <- pp.jug.male[colnames(dist.tr),colnames(dist.tr)]
 pp.jug.female <- pp.jug.female[colnames(dist.tr),colnames(dist.tr)]
 
 ## Plotting:
+
+pdf("Figure_pairwise_procrustes_distance.pdf", height = 14, width = 7)
 par(mfrow = c(2,1))
-par(mai = c(0.1,1,1,0.1))
 plot(c(dist.tr), c(pp.male), ylim = c(0,0.4), xlim = c(0, 12), xlab = ""
      , ylab = "", axes = F)
 abline(lm(c(pp.male) ~ c(dist.tr)), lwd = 2)
@@ -93,10 +81,9 @@ abline(lm(c(pp.pro.male) ~ c(dist.tr)), lty = 1, lwd = 2, col = "grey")
 points(c(dist.tr), c(pp.jug.male), pch = 4, col = "grey")
 abline(lm(c(pp.jug.male) ~ c(dist.tr)), lty = 1, lwd = 2, col = "grey")
 axis(side = 2, at = c(0.0, 0.2, 0.4), cex.axis = 0.8)
-points(x = 12, y = 0.35, pch = -0x2642L, cex = 3.0)
+## points(x = 12, y = 0.35, pch = -0x2642L, cex = 3.0)
 mtext("Procrustes distance", side = 2, line = 2.5)
 
-par(mai = c(1,1,0.1,0.1))
 plot(c(dist.tr), c(pp.female), ylim = c(0,0.4), xlim = c(0,12),xlab = ""
      , ylab = "", axes = F)
 abline(lm(c(pp.female) ~ c(dist.tr)), lwd = 2)
@@ -108,13 +95,16 @@ points(c(dist.tr), c(pp.jug.female), pch = 4, col = "grey")
 abline(lm(c(pp.jug.female) ~ c(dist.tr)), lty = 1, lwd = 2, col = "grey")
 axis(side = 2, at = c(0.0, 0.2, 0.4), cex.axis = 0.8)
 axis(side = 1, cex.axis = 0.8)
-points(x = 12, y = 0.35, pch = -0x2640L, cex = 3.0)
+## points(x = 12, y = 0.35, pch = -0x2640L, cex = 3.0)
 mtext("Procrustes distance", side = 2, line = 2.5)
 mtext("Phylogenetic distance", side = 1, line = 2.5)
+dev.off()
 
 ######################################################################################
 ## Figure 5: Evolutionary rates of the male and female genitalia estimated using the ultrametric
 ##       phylogeny.
+
+pdf("Figure_5_evolutionary_rates.pdf")
 par(mar = c(4.0,4.0,2.0,2.0))
 dd.null.uncor <- density(comp.gen.graphen$null.uncor, from = 0, to = 4)
 dd.null.cor <- density(comp.gen.graphen$null.cor, from = 0, to = 4)
@@ -138,6 +128,7 @@ legend(x = 2.5, y = 4, legend = c("Uncorrelated","Correlated"), bty = "n", lty =
 axis(side = 2, at = 0:5); axis(side = 1)
 mtext(expression(paste(sigma["mult.M"]^2 / sigma["mult.F"]^2)), side = 1, line = 2.5)
 mtext("Density", side = 2, line = 2)
+dev.off()
 
 ######################################################################################
 ## Some additional plots not included in the manuscript:
