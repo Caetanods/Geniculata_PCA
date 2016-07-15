@@ -5,6 +5,7 @@
 
 ## Uncomment to load previous simulations and results:
 library(ape)
+library(geomorph)
 load("./data/all_analyses_results.RData")
 
 ## Figure 1: Not made in R.
@@ -12,32 +13,159 @@ load("./data/all_analyses_results.RData")
 ######################################################################################
 ## Figure 2: Correlated evolutionary changes of shape.
 
-pdf("Figure_2_PLS_of_male_female_genitalia.pdf", width = 7, height = 14)
-par(mfrow = c(2,1))
-cex <- 2
-par(mar=c(4,4,2.5,4))
-two.b.pls.plot(pls.gen.grafen, "PLS1 of male genitalia contrasts", "PLS1 of female genitalia contrasts", cex)
-text(x=0.2, y=-0.3, labels="r = 0.78, p = 0.007")
-two.b.pls.plot(pls.gen.unit, "PLS1 of male genitalia contrasts", "PLS1 of female genitalia contrasts", cex)
-text(x=0.1, y=-0.15, labels="r = 0.76, p = 0.02")
+## How many axes we need to explain the covariation of the genitalia?
+## We need two PLS1 axes to explain 95% of the evolutionary covariation in the data.
+int.tr$pls.singular.values[1]^2 / sum(int.tr$pls.singular.values^2) ## 79 % by the first.
+int.tr$pls.singular.values[2]^2 / sum(int.tr$pls.singular.values^2) ## 16 % by the second, cumulative of 95%.
+
+int.grafen$pls.singular.values[1]^2 / sum(int.grafen$pls.singular.values^2) ## 73 % by the first.
+int.grafen$pls.singular.values[2]^2 / sum(int.grafen$pls.singular.values^2) ## 20 % by the second, cumulative of 93%.
+
+## First plot the first and second axes of covariation in the data. Colors will be the same in the plots and in the phylogeny.
+pdf("Figure_2_PLS_of_male_female_genitalia_unit.pdf", width = 7, height = 14)
+par( mfrow = c(2,1) )
+plot(x=int.tr$XScores[,1], y=int.tr$YScores[,1], xlab="Phylogenetic PLS1 of male genitalia", ylab="Phylogenetic PLS1 of female genitalia"
+   , xlim=c(-0.15, +0.15),ylim=c(-0.1,0.1), type="n")
+colfunc <- colorRampPalette(c("blue", "red"))
+colp <- vector()
+colp[order(int.tr$XScores[,1])] <- colfunc(13)
+abline(h = 0, col="slategray2"); abline(v = 0, col="slategray2")
+points(x=int.tr$XScores[,1], y=int.tr$YScores[,1], pch=19, col=colp)
+adjust <- rep(0, times=13)
+adjust[8] <- 0.002
+text(x=int.tr$XScores[,1], y=int.tr$YScores[,1]+adjust, labels=gsub("C. ", "", rownames(int.tr$A1.matrix)), pos=4, )
+
+plot(x=int.tr$XScores[,2], y=int.tr$YScores[,2], xlab="Phylogenetic PLS2 of male genitalia", ylab="Phylogenetic PLS2 of female genitalia"
+     , type="n", xlim=c(-0.1, 0.1), ylim=c(-0.06,0.06))
+colfunc <- colorRampPalette(c("darkgreen", "orange"))
+colp <- vector()
+colp[order(int.tr$XScores[,2])] <- colfunc(13)
+adjust.x <- adjust.y <- rep(0, times=13)
+adjust.x[11] <- - 0.033
+adjust.x[8] <- - 0.037
+adjust.y[1] <- -0.002
+adjust.y[7] <- -0.001
+adjust.y[12] <- +0.001
+abline(h = 0, col="slategray2"); abline(v = 0, col="slategray2")
+points(x=int.tr$XScores[,2], y=int.tr$YScores[,2], pch=19, col=colp)
+text(x=int.tr$XScores[,2]+adjust.x, y=int.tr$YScores[,2]+adjust.y, labels=gsub("C. ", "", rownames(int.tr$A1.matrix)), pos=4, )
+
 dev.off()
 
-## Second-half of the figure. This is the results of the analysis of modularity using the CR
-##    coefficient.
+## Now we will plot the extreme shapes of the PLS axes. This will show which are the features of the shape that are related with the evolutionary correlation.
 
-pdf("CR_analysis.pdf", width = 7, height = 14)
+## PLS1 axis:
+pdf("PLS1_extreme_shapes.pdf", width = 7, height = 7+(7/2))
+par(mfrow=c(3,2))
+m <- cord.gen.male[,,"C. rideri"]
+lim <- range(c(m[,1], m[,2]))
+plot(x=m[,1], y=m[,2], type="c", axes=FALSE, xlab = "", ylab = "", xlim=lim, ylim=lim)
+points(x=m[,1], y=m[,2], type="p", pch=16, col="red")
+m <- cord.gen.female[,,"C. rideri"]
+lim <- range(c(m[,1], m[,2]))
+plot(x=m[,1], y=m[,2], type="c", axes=FALSE, xlab = "", ylab = "", xlim=lim, ylim=lim)
+points(x=m[,1], y=m[,2], type="p", pch=16, col="red")
+m <- cord.gen.male[,,"C. nigritarsis"]
+lim <- range(c(m[,1], m[,2]))
+plot(x=m[,1], y=m[,2], type="c", axes=FALSE, xlab = "", ylab = "", xlim=lim, ylim=lim)
+points(x=m[,1], y=m[,2], type="p", pch=16, col="#6A7F00")
+m <- cord.gen.female[,,"C. nigritarsis"]
+lim <- range(c(m[,1], m[,2]))
+plot(x=m[,1], y=m[,2], type="c", axes=FALSE, xlab = "", ylab = "", xlim=lim, ylim=lim)
+points(x=m[,1], y=m[,2], type="p", pch=16, col="#6A7F00")
+m <- cord.gen.male[,,"C. immaculata"]
+lim <- range(c(m[,1], m[,2]))
+plot(x=m[,1], y=m[,2], type="c", axes=FALSE, xlab = "", ylab = "", xlim=lim, ylim=lim)
+points(x=m[,1], y=m[,2], type="p", pch=16, col="blue")
+m <- cord.gen.female[,,"C. immaculata"]
+lim <- range(c(m[,1], m[,2]))
+plot(x=m[,1], y=m[,2], type="c", axes=FALSE, xlab = "", ylab = "", xlim=lim, ylim=lim)
+points(x=m[,1], y=m[,2], type="p", pch=16, col="blue")
+dev.off()
 
-par(mfrow=c(2,1))
-hist(mod.grafen.test$random.CR, xlim = c(0,2), col="grey", border = "white", xlab="CR values"
+## PLS2 axis:
+pdf("PLS2_extreme_shapes.pdf", width = 7, height = 7+(7/2))
+par(mfrow=c(3,2))
+m <- cord.gen.male[,,"C. gravis"]
+lim <- range(c(m[,1], m[,2]))
+plot(x=m[,1], y=m[,2], type="c", axes=FALSE, xlab = "", ylab = "", xlim=lim, ylim=lim)
+points(x=m[,1], y=m[,2], type="p", pch=16, col="darkgreen")
+m <- cord.gen.female[,,"C. gravis"]
+lim <- range(c(m[,1], m[,2]))
+plot(x=m[,1], y=m[,2], type="c", axes=FALSE, xlab = "", ylab = "", xlim=lim, ylim=lim)
+points(x=m[,1], y=m[,2], type="p", pch=16, col="darkgreen")
+m <- cord.gen.male[,,"C. pengue"]
+lim <- range(c(m[,1], m[,2]))
+plot(x=m[,1], y=m[,2], type="c", axes=FALSE, xlab = "", ylab = "", xlim=lim, ylim=lim)
+points(x=m[,1], y=m[,2], type="p", pch=16, col="#D49A00")
+m <- cord.gen.female[,,"C. pengue"]
+lim <- range(c(m[,1], m[,2]))
+plot(x=m[,1], y=m[,2], type="c", axes=FALSE, xlab = "", ylab = "", xlim=lim, ylim=lim)
+points(x=m[,1], y=m[,2], type="p", pch=16, col="#D49A00")
+m <- cord.gen.male[,,"C. vanduzeei"]
+lim <- range(c(m[,1], m[,2]))
+plot(x=m[,1], y=m[,2], type="c", axes=FALSE, xlab = "", ylab = "", xlim=lim, ylim=lim)
+points(x=m[,1], y=m[,2], type="p", pch=16, col="orange")
+m <- cord.gen.female[,,"C. vanduzeei"]
+lim <- range(c(m[,1], m[,2]))
+plot(x=m[,1], y=m[,2], type="c", axes=FALSE, xlab = "", ylab = "", xlim=lim, ylim=lim)
+points(x=m[,1], y=m[,2], type="p", pch=16, col="orange")
+dev.off()
+
+## To show if there is any difference with the set of grafen branch lengths:
+pdf("Figure_2_PLS_of_male_female_genitalia_grafen.pdf", width = 7, height = 14)
+par( mfrow = c(2,1) )
+plot(x=int.grafen$XScores[,1], y=int.grafen$YScores[,1], xlab="Phylogenetic PLS1 of male genitalia", ylab="Phylogenetic PLS1 of female genitalia"
+   , xlim=c(-0.4, +0.4),ylim=c(-0.4,0.4), type="n")
+colfunc <- colorRampPalette(c("blue", "red"))
+colp <- vector()
+colp[order(int.grafen$XScores[,1])] <- colfunc(13)
+abline(h = 0, col="slategray2"); abline(v = 0, col="slategray2")
+points(x=int.grafen$XScores[,1], y=int.grafen$YScores[,1], pch=19, col=colp)
+adjust.x <- rep(0, times=13)
+adjust.y <- rep(0, times=13)
+adjust.x[7] <- 0.18 -.03
+adjust.x[13] <- 0.16 -.03
+adjust.x[9] <- 0.14 -.03
+adjust.x[1] <- 0.25 -.03
+adjust.y[c(10)] <- -0.027
+adjust.y[c(9)] <- -0.033
+text(x=int.grafen$XScores[,1]+adjust.x, y=int.grafen$YScores[,1]+adjust.y
+   , labels=gsub("C. ", "", rownames(int.grafen$A1.matrix)), pos=2, )
+
+plot(x=int.grafen$XScores[,2], y=int.grafen$YScores[,2], xlab="Phylogenetic PLS2 of male genitalia", ylab="Phylogenetic PLS2 of female genitalia"
+     , type="n", xlim=c(-0.3, 0.3), ylim=c(-0.2,0.2))
+colfunc <- colorRampPalette(c("darkgreen", "orange"))
+colp <- vector()
+colp[order(int.grafen$XScores[,2])] <- colfunc(13)
+adjust.x <- adjust.y <- rep(0, times=13)
+adjust.x[3] <- 0.10 -.02
+adjust.x[6] <- 0.10 -.02
+adjust.x[1] <- 0.19 -.02
+adjust.x[12] <- 0.12 -.02
+abline(h = 0, col="slategray2"); abline(v = 0, col="slategray2")
+points(x=int.grafen$XScores[,2], y=int.grafen$YScores[,2], pch=19, col=colp)
+text(x=int.grafen$XScores[,2]+adjust.x, y=int.grafen$YScores[,2]+adjust.y
+   , labels=gsub("C. ", "", rownames(int.grafen$A1.matrix)), pos=2, )
+
+dev.off()
+
+######################################################################################
+## Figure 3: Results of the analysis of modularity using the CR coefficient.
+
+pdf("CR_analysis_both_trees.pdf", width = 14, height = 7)
+par(mfrow = c(1,2))
+hist(mod.unit.test$random.CR, xlim = c(0,1.5), ylim=c(0,2000), col="slategray2", border = "white", xlab="CR values"
    , main="", breaks = 50)
-lines(x = c(mod.grafen.test$CR,mod.grafen.test$CR), y = c(0,500), lwd = 2)
-text(x = mod.grafen.test$CR, y = 600, labels = round(mod.grafen.test$CR, digits = 2) )
+hist(mod.unit.test$CR.boot, col="orangered", border = "white", xlab="CR values", breaks = 27, add=TRUE)
+lines(x = c(mod.unit.test$CR,mod.unit.test$CR), y = c(0,1100), lwd = 2)
+text(x = mod.unit.test$CR, y = 1200, labels = round(mod.unit.test$CR, digits = 2), cex=2)
 
-hist(mod.unit.test$random.CR, xlim = c(0,2), col="grey", border = "white", xlab="CR values"
+hist(mod.grafen.test$random.CR, xlim = c(0,1.5), ylim=c(0,2000), col="slategray2", border = "white", xlab="CR values"
    , main="", breaks = 50)
-lines(x = c(mod.unit.test$CR,mod.unit.test$CR), y = c(0,500), lwd = 2)
-text(x = mod.unit.test$CR, y = 600, labels = round(mod.unit.test$CR, digits = 2) )
-
+hist(mod.grafen.test$CR.boot, col="orangered", border = "white", xlab="CR values", breaks = 27, add=TRUE)
+lines(x = c(mod.grafen.test$CR, mod.grafen.test$CR), y = c(0,1100), lwd = 2)
+text(x = mod.grafen.test$CR, y = 1200, labels = round(mod.grafen.test$CR, digits = 2), cex=2)
 dev.off()
 
 ######################################################################################
@@ -72,27 +200,27 @@ pp.jug.female <- pp.jug.female[colnames(dist.tr),colnames(dist.tr)]
 pdf("Figure_pairwise_procrustes_distance.pdf", height = 14, width = 7)
 par(mfrow = c(2,1))
 plot(c(dist.tr), c(pp.male), ylim = c(0,0.4), xlim = c(0, 12), xlab = ""
-     , ylab = "", axes = F)
-abline(lm(c(pp.male) ~ c(dist.tr)), lwd = 2)
-points(c(dist.tr), c(pp.scu.male), pch = 4, col = "grey")
-abline(lm(c(pp.scu.male) ~ c(dist.tr)), lty = 1, lwd = 2, col = "grey")
-points(c(dist.tr), c(pp.pro.male), pch = 4, col = "grey")
-abline(lm(c(pp.pro.male) ~ c(dist.tr)), lty = 1, lwd = 2, col = "grey")
-points(c(dist.tr), c(pp.jug.male), pch = 4, col = "grey")
-abline(lm(c(pp.jug.male) ~ c(dist.tr)), lty = 1, lwd = 2, col = "grey")
+     , ylab = "", axes = F, col = "orangered", pch=20)
+abline(lm(c(pp.male) ~ c(dist.tr)), lwd = 2, col = "black")
+points(c(dist.tr), c(pp.scu.male), pch = 4, col = "slategray2")
+abline(lm(c(pp.scu.male) ~ c(dist.tr)), lty = 1, lwd = 2, col = "slategray2")
+points(c(dist.tr), c(pp.pro.male), pch = 4, col = "slategray2")
+abline(lm(c(pp.pro.male) ~ c(dist.tr)), lty = 1, lwd = 2, col = "slategray2")
+points(c(dist.tr), c(pp.jug.male), pch = 4, col = "slategray2")
+abline(lm(c(pp.jug.male) ~ c(dist.tr)), lty = 1, lwd = 2, col = "slategray2")
 axis(side = 2, at = c(0.0, 0.2, 0.4), cex.axis = 0.8)
 ## points(x = 12, y = 0.35, pch = -0x2642L, cex = 3.0)
 mtext("Procrustes distance", side = 2, line = 2.5)
 
 plot(c(dist.tr), c(pp.female), ylim = c(0,0.4), xlim = c(0,12),xlab = ""
-     , ylab = "", axes = F)
-abline(lm(c(pp.female) ~ c(dist.tr)), lwd = 2)
-points(c(dist.tr), c(pp.scu.female), pch = 4, col = "grey")
-abline(lm(c(pp.scu.female) ~ c(dist.tr)), lty = 1, lwd = 2, col = "grey")
-points(c(dist.tr), c(pp.pro.female), pch = 4, col = "grey")
-abline(lm(c(pp.pro.female) ~ c(dist.tr)), lty = 1, lwd = 2, col = "grey")
-points(c(dist.tr), c(pp.jug.female), pch = 4, col = "grey")
-abline(lm(c(pp.jug.female) ~ c(dist.tr)), lty = 1, lwd = 2, col = "grey")
+     , ylab = "", axes = F, col = "orangered", pch = 20)
+abline(lm(c(pp.female) ~ c(dist.tr)), lwd = 2, col = "black")
+points(c(dist.tr), c(pp.scu.female), pch = 4, col = "slategray2")
+abline(lm(c(pp.scu.female) ~ c(dist.tr)), lty = 1, lwd = 2, col = "slategray2")
+points(c(dist.tr), c(pp.pro.female), pch = 4, col = "slategray2")
+abline(lm(c(pp.pro.female) ~ c(dist.tr)), lty = 1, lwd = 2, col = "slategray2")
+points(c(dist.tr), c(pp.jug.female), pch = 4, col = "slategray2")
+abline(lm(c(pp.jug.female) ~ c(dist.tr)), lty = 1, lwd = 2, col = "slategray2")
 axis(side = 2, at = c(0.0, 0.2, 0.4), cex.axis = 0.8)
 axis(side = 1, cex.axis = 0.8)
 ## points(x = 12, y = 0.35, pch = -0x2640L, cex = 3.0)

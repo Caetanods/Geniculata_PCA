@@ -41,3 +41,22 @@ to.mean.shape <- function(ind.coord){
     }
     return(coord)
 }
+
+to.mean.centroid <- function(x){
+    ## Functions gets the output of 'gpagen' and calculates the mean centroid size per species.
+    size <- x$Csize
+    spp <- unique( names(size) )
+    centroid.mean <- sapply(spp, FUN = function(x) mean(size[which(names(size) == x)] ) )
+    return( centroid.mean )
+}
+
+to.grand.mean <- function(x){
+    ## Function to calculate the grand mean of the shapes in x.
+    mm <- matrix(nrow = 20, ncol=2)
+    for(i in 1:20){
+        for(j in 1:2){
+            mm[i,j] <- mean( x$coords[i,j,] )
+        }
+    }
+    return(mm)
+}

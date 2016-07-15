@@ -17,7 +17,6 @@ raw.gen.female <- read.table("./data/Raw.coord_female.txt", header = T, sep = "\
 raw.gen.male <- to.geomorph(raw.gen.male)
 raw.gen.female <- to.geomorph(raw.gen.female)
 
-
 ## Get scutelum, pronotum and juga shape data:
 ## Read from the original data files.
 raw.scu <- read.table("./data/Raw_scutelum_male_female.txt", header=T, sep="\t", stringsAsFactors=FALSE)[,-1]
@@ -58,14 +57,14 @@ raw.scu.female <- reduce.female
 slide.20 <- as.matrix(read.csv("./data/curveslide_20.csv"))
 
 ## Procrustes superposition step with sliding semilandmarks minimizing bending energy.
-gen.male <- gpagen(raw.gen.male, ProcD = FALSE, ShowPlot = FALSE, curves = slide.20)
-gen.female <- gpagen(raw.gen.female, ProcD = FALSE, ShowPlot = FALSE, curves = slide.20)
-scu.male <- gpagen(raw.scu.male, ProcD = FALSE, ShowPlot = FALSE, curves = slide.20)
-scu.female <- gpagen(raw.scu.female, ProcD = FALSE, ShowPlot = FALSE, curves = slide.20)
-pro.male <- gpagen(raw.pro.male, ProcD = FALSE, ShowPlot = FALSE, curves = slide.20)
-pro.female <- gpagen(raw.pro.female, ProcD = FALSE, ShowPlot = FALSE, curves = slide.20)
-jug.male <- gpagen(raw.jug.male, ProcD = FALSE, ShowPlot = FALSE, curves = slide.20)
-jug.female <- gpagen(raw.jug.female, ProcD = FALSE, ShowPlot = FALSE, curves = slide.20)
+gen.male <- gpagen(raw.gen.male, ProcD = FALSE, curves = slide.20)
+gen.female <- gpagen(raw.gen.female, ProcD = FALSE, curves = slide.20)
+scu.male <- gpagen(raw.scu.male, ProcD = FALSE, curves = slide.20)
+scu.female <- gpagen(raw.scu.female, ProcD = FALSE, curves = slide.20)
+pro.male <- gpagen(raw.pro.male, ProcD = FALSE, curves = slide.20)
+pro.female <- gpagen(raw.pro.female, ProcD = FALSE, curves = slide.20)
+jug.male <- gpagen(raw.jug.male, ProcD = FALSE, curves = slide.20)
+jug.female <- gpagen(raw.jug.female, ProcD = FALSE, curves = slide.20)
 
 ## Species mean value for each coordinate of the procrustes centralized data.
 cord.gen.male <- to.mean.shape(gen.male)
@@ -77,6 +76,26 @@ cord.pro.female <- to.mean.shape(pro.female)
 cord.jug.male <- to.mean.shape(jug.male)
 cord.jug.female <- to.mean.shape(jug.female)
 
+## Species mean value for centroid size
+size.gen.male <- to.mean.centroid(gen.male)
+size.gen.female <- to.mean.centroid(gen.female)
+size.scu.male <- to.mean.centroid(scu.male)
+size.scu.female <- to.mean.centroid(scu.female)
+size.pro.male <- to.mean.centroid(pro.male)
+size.pro.female <- to.mean.centroid(pro.female)
+size.jug.male <- to.mean.centroid(jug.male)
+size.jug.female <- to.mean.centroid(jug.female)
+
+## Grand mean for the shape data:
+mean.gen.male <- to.grand.mean(gen.male)
+mean.gen.female <- to.grand.mean(gen.female)
+mean.scu.male <- to.grand.mean(scu.male)
+mean.scu.female <- to.grand.mean(scu.female)
+mean.pro.male <- to.grand.mean(pro.male)
+mean.pro.female <- to.grand.mean(pro.female)
+mean.jug.male <- to.grand.mean(jug.male)
+mean.jug.female <- to.grand.mean(jug.female)
+
 ## Format the phylogeny tip labels to be equal to the data:
 tr$tip.label <- gsub("_"," ", tr$tip.label)
 
@@ -85,7 +104,11 @@ tr.grafen <- compute.brlen(tr)
 
 ## Save data to downstream analyses:
 save(cord.gen.male, cord.gen.female, cord.scu.male, cord.scu.female, cord.pro.male
-         , cord.pro.female, cord.jug.male, cord.jug.female, tr, tr.grafen
-         , file = "./data/Geniculata_data.RData")
+   , cord.pro.female, cord.jug.male, cord.jug.female, tr, tr.grafen
+   , size.gen.male, size.gen.female, size.scu.male, size.scu.female, size.pro.male
+   , size.pro.female, size.jug.male, size.jug.female
+   , mean.gen.male, mean.gen.female, mean.scu.male, mean.scu.female, mean.pro.male
+   , mean.pro.female, mean.jug.male, mean.jug.female
+   , file = "./data/Geniculata_data.RData")
 
 ## Now follow the 'Make_analysis.R' script for all the analysis made on the article.

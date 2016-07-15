@@ -1,3 +1,61 @@
+physignal_extra <- function(A, phy, nsims=999, plot=TRUE){
+    ## Function to calculate phylogenetic signal under a BM model using the distance methods by Adams.
+    ## This function differ from 'physignal' from 'geomorph' because it calculates a distribution of
+    ##    values for k given the observed data and tree. This distribution might deviate from 1 depending
+    ##    on the correlation structure of the data.
+    ## Function returns the vector with simulations results with tips shuffled and of simulations under
+    ##    a mvBM model with the structure of evolutionary covariation estimated from the data.
+    ## Function also returns the density of the observed value of K under both densities.
+    ## A = geometric morphometics data.
+    ## phy = phylogenetic tree.
+    ## plot = Whether to plot the results.
+    dt <- treedata(phy, to.matrix(A), sort=TRUE)
+    out <- physignal(A=dt$data, phy=dt$phy, iter=nsims)
+    get.Kstat(x=dt$data, phy=dt$phy)
+    sigma <- ratematrix(dt$phy, dt$data)
+    if( det(sigma) == 0 ) sigma <- nearPD( sigma )$mat
+    sim <- sim.char(dt$phy, par=as.matrix(sigma), nsim=nsims)
+    k.sim.bm <- sapply(1:999, function(x) get.Kstat(x=sim[,,x], phy=dt$phy) )
+    k.sim.bm <- c(k.sim.bm, out$phy.signal)
+    xlim <- range(c(out$random.K, k.sim.bm))
+    d.k.sim <- ecdf(k.sim.bm)(out$phy.signal)
+    d.k.shuffle <- ecdf(out$random.K)(out$phy.signal)
+    den <- c(d.k.sim, d.k.shuffle)
+    names(den) <- c("density_k_BM_sims","density_k_shuffle")
+    if(plot){
+        hist(out$random.K, xlim=xlim, freq=FALSE, border="white", col="gray", main = ""
+             , xlab = "K values", )
+        hist(k.sim.bm, xlim=xlim, add=TRUE, freq=FALSE, border="white", col="red")
+        abline(v=out$phy.signal, col="blue", lwd = 2)
+        legend(x="topright", legend=c("Shuffled tips","BM sims"), fill=c("gray","red")
+             , border=c("white","white") )
+    }
+    return(list(density = den, k.sim.bm = k.sim.bm, k.shuffle = out$random.K))
+}
+
+get.Kstat <- function(x, phy){
+    ## Function will calculate the K stat only, without performing simulations by shuffling the
+    ##   tips of the phylogeny.
+    ## x = A matrix, this can be generated with the function 'to.matrix'.
+    ## phy = a 'phylo' object.
+    x <- as.matrix(x)
+    dt <- treedata(phy, x, sort=TRUE)
+    N <- length(dt$phy$tip.label)
+    phy.parts <- geomorph:::phylo.mat(dt$data, dt$phy)
+    invC <- phy.parts$invC
+    D.mat <- phy.parts$D.mat
+    C <- phy.parts$C
+    ones <- matrix(1, nrow(x), 1)
+    a.obs <- colSums(invC) %*% x/sum(invC)
+    distmat <- as.matrix(dist(rbind(as.matrix(dt$data), a.obs)))
+    MSEobs.d <- sum(distmat[(1:N), (N + 1)]^2)
+    dist.adj <- as.matrix(dist(rbind((D.mat %*% (x - (ones %*% a.obs))), 0)))
+    MSE.d <- sum(dist.adj[(1:N), (N + 1)]^2)
+    K.denom <- (sum(diag(C)) - N * solve(t(ones) %*% solve(C) %*% ones))/(N - 1)
+    K.stat <- (MSEobs.d/MSE.d)/K.denom
+    return( as.numeric(K.stat) )
+}
+
 sigma.d <- function(phy, x, N, p) {
     ## Function calculates the sigma^2_mult (Adams, 2014) for one group only.
     x <- prcomp(x)$x
@@ -13,273 +71,6 @@ sigma.d <- function(phy, x, N, p) {
     vec.d2 <- dist.adj[N + 1, 1:N]^2
     sigma.d.all <- sum(vec.d2)/N/p
     return(sigma.d.all)
-}
-
-geo.comp.rates <- function (phy, A, B, plot = FALSE, iter = 999){
-    ## Arguments:
-    ## phy <- phylogeny of type 'phylo'
-    ## A <- geomorph data. 2D morphometric data.
-    ## B <- geomorph data. 2D morphometric data.
-    
-    ## This is a modification of the function 'compare.evol.rates' from the package
-    ##	'geomorph' by Dean Adams. Please cite the original package and correspondent
-    ##  articles. See 'help(compare.evol.rates)' for more info.
-
-    ## The correlated null is generated using the R matrix estimated with 'ratematrix'
-    ##  in geiger v.2 and scaled to the respective correlation matrix.
-    ## When the number of traits is larger than the number of tips the R matrix
-    ##  is converted into the nearest vcv matrix.
-    ## The uncorrelated null is generated with the mean of the two sigma_mult values.
-    ## Both for correlated and uncorrelated null models the function keep the relative
-    ##  difference in the number of traits between matrices.
-    ## See 'help(compare.evol.rates)' for more info.
-
-    library(Matrix)	
-
-    ## Check objects block:
-    A <- two.d.array(A) ## Make the data into "MorphoJ export" format.
-    B <- two.d.array(B) ## Make the data into "MorphoJ export" format.
-    ntaxa <- length(phy$tip.label)
-    A.p <- ncol(A) ## This is the (number of landmarks * 2) + 1
-    B.p <- ncol(B) ## This is the (number of landmarks * 2) + 1
-
-    ## Calculate sigma^2_mult for the matrix A and B.
-    sigmad.obs.A <- sigma.d(phy, A, ntaxa, A.p)
-    sigmad.obs.B <- sigma.d(phy, B, ntaxa, B.p)
-
-    ## Getting the faster rate:
-    if(sigmad.obs.A >= sigmad.obs.B){
-        sigmad.ratio <- sigmad.obs.A / sigmad.obs.B
-        sigma.sim <- sigmad.obs.A
-        who <- "A"
-    } else {
-        sigmad.ratio <- sigmad.obs.B / sigmad.obs.A
-        sigma.sim <- sigmad.obs.B
-        who <- "B"
-    }
-
-    ## Simulate the null distribution of traits.
-
-    ## The uncorrelated case:
-    rate.uncor.A <- diag(mean(sigmad.obs.A, sigmad.obs.B), A.p)
-    rate.uncor.B <- diag(mean(sigmad.obs.A, sigmad.obs.B), B.p)
-    A.sim.uncor <- sim.char(phy, rate.uncor.A, nsim = iter)
-    B.sim.uncor <- sim.char(phy, rate.uncor.B, nsim = iter)
-
-    ## The correlated case:
-    rate.cor.A <- ratematrix(phy, A)
-    rate.cor.B <- ratematrix(phy, B)
-    ## Calculate nearest vcv matrix.
-    if(A.p >= ntaxa) rate.cor.A <- nearPD(rate.cor.A)[[1]]
-    if(B.p >= ntaxa) rate.cor.B <- nearPD(rate.cor.B)[[1]]
-    ## Calculate the correlation matrix.
-    rate.cor.A <- as.matrix(cov2cor(rate.cor.A))
-    rate.cor.B <- as.matrix(cov2cor(rate.cor.B))
-    A.sim.cor <- sim.char(phy, rate.cor.A, nsim = iter)
-    B.sim.cor <- sim.char(phy, rate.cor.B, nsim = iter)
-
-    sig.sim.uncor <- 1
-    sigmad.sim.uncor.A <- rep(0, iter)
-    sigmad.sim.uncor.B <- rep(0, iter)
-
-    sig.sim.cor <- 1
-    sigmad.sim.cor.A <- rep(0, iter)
-    sigmad.sim.cor.B <- rep(0, iter)
-
-    ## Calculate distribution of sigma values for correlated and uncorrelated.
-    if(who == "A"){
-        for (ii in 1:iter) {
-            ## Null for uncorrelated:
-            sigmad.sim.uncor.A[ii] <- sigma.d(phy, A.sim.uncor[, ,ii], ntaxa, A.p)
-            sigmad.sim.uncor.B[ii] <- sigma.d(phy, B.sim.uncor[, ,ii], ntaxa, B.p)
-            sig.sim.uncor <- ifelse(sigmad.sim.uncor.A[ii] / sigmad.sim.uncor.B[ii] >= sigmad.ratio, sig.sim.uncor + 1, sig.sim.uncor)
-            
-            ## Null for correlated:
-            sigmad.sim.cor.A[ii] <- sigma.d(phy, A.sim.cor[, ,ii], ntaxa, A.p)
-            sigmad.sim.cor.B[ii] <- sigma.d(phy, B.sim.cor[, ,ii], ntaxa, B.p)
-            sig.sim.cor <- ifelse(sigmad.sim.cor.A[ii] / sigmad.sim.cor.B[ii] >= sigmad.ratio, sig.sim.cor + 1, sig.sim.cor)
-        }
-    sim.ratio.uncor <- sigmad.sim.uncor.A / sigmad.sim.uncor.B
-    sim.ratio.cor <- sigmad.sim.cor.A / sigmad.sim.cor.B
-    } else {
-        for (ii in 1:iter) {
-            ## Null for uncorrelated:
-            sigmad.sim.uncor.A[ii] <- sigma.d(phy, A.sim.uncor[, ,ii], ntaxa, A.p)
-            sigmad.sim.uncor.B[ii] <- sigma.d(phy, B.sim.uncor[, ,ii], ntaxa, B.p)
-            sig.sim.uncor <- ifelse(sigmad.sim.uncor.B[ii] / sigmad.sim.uncor.A[ii] >= sigmad.ratio, sig.sim.uncor + 1, sig.sim.uncor)
-            ## Null for correlated:
-            sigmad.sim.cor.A[ii] <- sigma.d(phy, A.sim.cor[, ,ii], ntaxa, A.p)
-            sigmad.sim.cor.B[ii] <- sigma.d(phy, B.sim.cor[, ,ii], ntaxa, B.p)
-            sig.sim.cor <- ifelse(sigmad.sim.cor.B[ii] / sigmad.sim.cor.A[ii] >= sigmad.ratio, sig.sim.cor + 1, sig.sim.cor)
-        }
-        sim.ratio.uncor <- sigmad.sim.uncor.B / sigmad.sim.uncor.A
-        sim.ratio.cor <- sigmad.sim.cor.B / sigmad.sim.cor.A
-    }
-
-    ## Calculate the p value for the Monte Carlo:
-    p.value.cor <- sig.sim.cor / (iter + 1)
-    p.value.uncor <- sig.sim.uncor / (iter + 1)
-
-    ## Need to add the observed value to the distribution.
-    sim.ratio.uncor <- append(sim.ratio.uncor, sigmad.ratio)
-    sim.ratio.cor <- append(sim.ratio.cor, sigmad.ratio)
-
-    if(plot == TRUE){        
-        ## Make two histogram plots:
-        par(mfrow = c(1,2))
-        ## Uncorrelated data:
-        hist(sim.ratio.uncor, 30, freq = TRUE, col = "gray", xlab = "SigmaD", main = "Uncorrelated null")
-        arrows(sigmad.ratio, 50, sigmad.ratio, 5, length = 0.1, lwd = 2, col = "red")
-        ifelse(who == "A", st <- "A / B", st <- "B / A")
-        legend("topright", paste("sigma ratio: ", st, "\n", "p value: ", round(p.value.uncor, 3), sep="")
-                                         , bty="n", text.col = "blue")
-        ## Correlated data:
-        hist(sim.ratio.cor, 30, freq = TRUE, col = "gray", xlab = "SigmaD", main = "Correlated null")
-        arrows(sigmad.ratio, 50, sigmad.ratio, 5, length = 0.1, lwd = 2, col = "red")
-        ifelse(who == "A", st <- "A / B", st <- "B / A")
-        legend("topright", paste("sigma ratio: ", st, "\n", "p value: ", round(p.value.cor, 3), sep="")
-                                         , bty="n", text.col = "blue")
-    }
-
-    ## Create return objects:
-    obs <- c(sigmad.obs.A, sigmad.obs.B)
-    names(obs) <- c("sigmaA","sigmaB")
-    p.value <- c(p.value.uncor, p.value.cor)
-    names(p.value) <- c("Uncorr","Corr")
-
-    return(list(obs = obs, p.value = p.value, null.uncor = sim.ratio.uncor, null.cor = sim.ratio.cor))
-}
-
-geo.vec.comp.rates <- function (phy, A, B, plot = FALSE, iter = 999){
-    ## Arguments:
-    ## phy <- phylogeny of type 'phylo'
-    ## A <- vector object. The scalar trait.
-    ## B <- geomorph data. 2D morphometric data.
-    ## This is a modification of the function 'compare.evol.rates' from the package
-    ##	'geomorph' by Dean Adams. Please cite the original package and correspondent
-    ##  articles. See 'help(compare.evol.rates)' for more info.
-
-    ## This function compare rates of evolution of a scalar trait with a 2D morphometric data.
-    ## The p.value for the difference is calculated using Monte Carlo simulations of the ratio
-    ##  between the rates.
-
-    ## The correlated null is generated using the R matrix estimated with 'ratematrix'
-    ##  in geiger v.2 and scaled to the respective correlation matrix for the 2D morphometric trait.
-    ## When the number of traits is larger than the number of tips the R matrix
-    ##  is bent (converted) into the nearest positive-definite matrix.
-
-    ## See 'help(compare.evol.rates)' for more info.
-
-    library(Matrix)
-
-    ## Check objects block:
-    B <- two.d.array(B) ## Make the data into "MorphoJ export" format.
-    ntaxa <- length(phy$tip.label)
-    B.p <- ncol(B) ## This is the (number of landmarks * 2) + 1
-
-    ## Calculate sigma^2_mult for the matrix B.
-    sigmad.obs.B <- sigma.d(phy, B, ntaxa, B.p)
-    ## Calculate sigma^2 for the vector A.
-    fit <- fitContinuous(phy, A, model = "BM")
-    sigmad.obs.A <- fit$opt$sigsq
-
-    ## Getting the faster rate:
-    if(sigmad.obs.A >= sigmad.obs.B){
-        sigmad.ratio <- sigmad.obs.A / sigmad.obs.B
-        sigma.sim <- sigmad.obs.A
-        who <- "A"
-    } else {
-        sigmad.ratio <- sigmad.obs.B / sigmad.obs.A
-        sigma.sim <- sigmad.obs.B
-        who <- "B"
-    }
-
-    ## Simulate the null distribution of traits.
-
-    ## The scalar trait:
-    A.sim <- sim.char(phy, sigmad.obs.A, model = "BM", nsim = iter)
-
-    ## The uncorrelated case:
-    rate.uncor.B <- diag(mean(sigmad.obs.A, sigmad.obs.B), B.p)
-    B.sim.uncor <- sim.char(phy, rate.uncor.B, nsim = iter)
-
-    ## The correlated case:
-    rate.cor.B <- ratematrix(phy, B)
-    ## Calculate nearest vcv matrix.
-    if(B.p >= ntaxa) rate.cor.B <- nearPD(rate.cor.B)[[1]]
-    ## Calculate the correlation matrix.
-    rate.cor.B <- as.matrix(cov2cor(rate.cor.B))
-    B.sim.cor <- sim.char(phy, rate.cor.B, nsim = iter)
-
-    sig.sim.uncor <- 1
-    sigmad.sim.uncor.B <- rep(0, iter)
-
-    sig.sim.cor <- 1
-    sigmad.sim.cor.B <- rep(0, iter)
-
-    ## Calculate distribution of sigma values for correlated and uncorrelated.
-
-    ## The vector estimate is constant:
-    sigmad.sim.A <- sapply(seq(dim(A.sim)[3]), function(x) fitContinuous(phy, A.sim[,,x], model = "BM")$opt$sigsq )
-
-    ## Now the correlated and uncorrelated. Guess I can make it faster somehow.
-    if(who == "A"){
-        for (ii in 1:iter) {
-            ## Null for uncorrelated:
-            sigmad.sim.uncor.B[ii] <- sigma.d(phy, B.sim.uncor[, ,ii], ntaxa, B.p)
-            sig.sim.uncor <- ifelse(sigmad.sim.A[ii] / sigmad.sim.uncor.B[ii] >= sigmad.ratio, sig.sim.uncor + 1, sig.sim.uncor)
-            
-            ## Null for correlated:
-            sigmad.sim.cor.B[ii] <- sigma.d(phy, B.sim.cor[, ,ii], ntaxa, B.p)
-            sig.sim.cor <- ifelse(sigmad.sim.A[ii] / sigmad.sim.cor.B[ii] >= sigmad.ratio, sig.sim.cor + 1, sig.sim.cor)
-        }
-    sim.ratio.uncor <- sigmad.sim.A / sigmad.sim.uncor.B
-    sim.ratio.cor <- sigmad.sim.A / sigmad.sim.cor.B
-    } else {
-        for (ii in 1:iter) {
-            ## Null for uncorrelated:
-            sigmad.sim.uncor.B[ii] <- sigma.d(phy, B.sim.uncor[, ,ii], ntaxa, B.p)
-            sig.sim.uncor <- ifelse(sigmad.sim.uncor.B[ii] / sigmad.sim.A[ii] >= sigmad.ratio, sig.sim.uncor + 1, sig.sim.uncor)
-            ## Null for correlated:
-            sigmad.sim.cor.B[ii] <- sigma.d(phy, B.sim.cor[, ,ii], ntaxa, B.p)
-            sig.sim.cor <- ifelse(sigmad.sim.cor.B[ii] / sigmad.sim.A[ii] >= sigmad.ratio, sig.sim.cor + 1, sig.sim.cor)
-        }
-        sim.ratio.uncor <- sigmad.sim.uncor.B / sigmad.sim.A
-        sim.ratio.cor <- sigmad.sim.cor.B / sigmad.sim.A
-    }
-
-    ## Calculate the p value for the Monte Carlo:
-    p.value.cor <- sig.sim.cor / (iter + 1)
-    p.value.uncor <- sig.sim.uncor / (iter + 1)
-
-    ## Need to add the observed value to the distribution.
-    sim.ratio.uncor <- append(sim.ratio.uncor, sigmad.ratio)
-    sim.ratio.cor <- append(sim.ratio.cor, sigmad.ratio)
-
-    if(plot == TRUE){        
-        ## Make two histogram plots:
-        par(mfrow = c(1,2))
-        ## Uncorrelated data:
-        hist(sim.ratio.uncor, 30, freq = TRUE, col = "gray", xlab = "SigmaD", main = "Uncorrelated null")
-        arrows(sigmad.ratio, 50, sigmad.ratio, 5, length = 0.1, lwd = 2, col = "red")
-        ifelse(who == "A", st <- "A / B", st <- "B / A")
-        legend("topright", paste("sigma ratio: ", st, "\n", "p value: ", round(p.value.uncor, 3), sep="")
-                                         , bty="n", text.col = "blue")
-        ## Correlated data:
-        hist(sim.ratio.cor, 30, freq = TRUE, col = "gray", xlab = "SigmaD", main = "Correlated null")
-        arrows(sigmad.ratio, 50, sigmad.ratio, 5, length = 0.1, lwd = 2, col = "red")
-        ifelse(who == "A", st <- "A / B", st <- "B / A")
-        legend("topright", paste("sigma ratio: ", st, "\n", "p value: ", round(p.value.cor, 3), sep="")
-                                         , bty="n", text.col = "blue")
-    }
-
-    ## Create return objects:
-    obs <- c(sigmad.obs.A, sigmad.obs.B)
-    names(obs) <- c("sigmaA","sigmaB")
-    p.value <- c(p.value.uncor, p.value.cor)
-    names(p.value) <- c("Uncorr","Corr")
-
-    return(list(obs = obs, p.value = p.value, null.uncor = sim.ratio.uncor, null.cor = sim.ratio.cor))
 }
 
 pls.plot <- function(A1, A2, scores1, scores2, xlab, ylab, xlim=NULL, ylim=NULL){
@@ -312,17 +103,6 @@ pls.plot <- function(A1, A2, scores1, scores2, xlab, ylab, xlim=NULL, ylim=NULL)
     geomorph:::tps(A2.ref, pls2.max, 20, sz = 0.7)
     close.screen(all.screens = TRUE)
     par(mar = c(5.1, 4.1, 4.1, 2.1))
-}
-
-two.b.pls.plot <- function(x, xlab, ylab, cex = 1){
-    ## Plot the results of two.b.pls.
-    up <- round(max(x$x.scores), digits = 1) + 0.1
-    plot(x$x.scores, x$y.scores, pch = 16, xlab = "", ylab = "", axes = FALSE, xlim = c(-up,up)
-       , ylim = c(-up,up), cex = cex)
-    axis(side = 1); axis(side = 2)
-    mtext(side = 1, text = xlab, line = 2.5)
-    mtext(side = 2, text = ylab, line = 2.5)
-    abline(lm(x$y.scores~x$x.scores), lwd = cex)
 }
 
 phylo.pls.light <- function(A1, A2, phy, iter = 999){
@@ -449,4 +229,33 @@ proc.dist <- function(x,y){
     s.sq <- sum(apply(sq, 2, sum))
     rt.s.sq <- sqrt(s.sq)
     return(rt.s.sq)
+}
+
+to.procD.pgls <- function(shape, size, tree){
+    ## Function perform the test of evolutionary allometry and calculates the P value for the multivariate regression using permutations.
+    geo.dt <- geomorph.data.frame(coords=shape, size=size)
+    res <- procD.pgls(f1=coords ~ size, phy=tree, data=geo.dt, iter=10000)
+    return(res)
+}
+
+phylo.size.correct <- function(shape, mean.shape, size, tree){
+    ## Function will perform the phylogenetic correction as described by Klingenberg and Marugan-Lobon, (2013) Systematic Biology.
+    ## Calculate the coefficients of a regression of contrasts of centroid size and contrasts of shape. Calculate the deviance from the species mean shapes from the grand mean shape. Use the coefficients of the contrasts regression to calculate predicted values for the species mean shapes (using the raw centroid sizes). Returns the residuals of the predicted values subtracted from the deviance from the grand mean shape.
+    m.shape <- to.matrix(shape)
+    ll <- dim(shape)[3]
+    dd <- dim(shape)[1]
+    rownames(m.shape) <- dimnames(shape)[[3]]
+    pic.shape <- sapply(1:ncol(m.shape), function(x) pic(x=m.shape[,x], phy=tree) )
+    pic.size <- pic(x=size, phy=tree)
+    regression.pic <- lm(pic.shape[,1:40] ~ pic.size -1)
+    expected <- array( dim=c(dd, 2, ll ) )
+    dev.mean <- array( dim=c(dd, 2, ll ) )
+    residuals <- array( dim=c(dd, 2, ll ) )
+    for(i in 1:ll){
+        expected[,,i] <- matrix(size[i] * as.numeric(regression.pic$coefficients), nrow=20, ncol=2)
+        dev.mean[,,i] <- shape[,,i] - mean.shape
+        residuals[,,i] <- dev.mean[,,i] - expected[,,i]
+    }
+    dimnames( residuals ) <- list(NULL, NULL, names(size.gen.male))
+    return(residuals)
 }
