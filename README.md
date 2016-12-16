@@ -1,5 +1,3 @@
-# Geniculata_rates
-
 Data and code for the article:
 
 ***Rapid differentiation and asynchronous coevolution of male and female genitalia in stink bugs***
